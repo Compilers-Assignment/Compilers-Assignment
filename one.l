@@ -68,7 +68,7 @@ void freeVariables() {
 }
 
 %}
-%x prog prevar var vartype commavar pblock 
+%x prog prevar var vartype commavar pblock assmtpunc assmt
 letter [A-Za-z]
 number [0-9]
 lower [a-z]
@@ -78,32 +78,46 @@ arithop [+-%*/]
 keywrd (program|integer|real|boolean|char|to|downto|if|else|var|while|for|do|array|and|or|not|begin|end|read|write) 
 %%
 
-program {printf("Program begins"); BEGIN prog;}
+program {printf("Line: %d Lexeme: %s Token Type: KEYWORD\n", linecount, yytext); BEGIN prog;}
 <prog>{keywrd}; {printf("Line %d Syntax Error %s", linecount, yytext); return 0;}
-<prog>{letter}({letter}*|{number}*|_*)*; {printf("IDENTIFIER"); BEGIN prevar;} //does this count as identifier?
+<prog>{letter}({letter}*|{number}*|_*)*; {printf("Line: %d Lexeme: %s Token Type: IDENTIFIER\n", linecount, yytext); BEGIN prevar;} //does this count as identifier?
 
-<prevar>var{space}* {printf("Entering var loop"); BEGIN var;} //this is for variables
+<prevar>var{space}* {printf("Line: %d Lexeme: %s Token Type: KEYWORD\n", linecount, yytext); BEGIN var;} //this is for variables
 <prevar>[^ \n\t] {printf("Line %d Syntax Error %s", linecount, yytext); return 0;}
 <prog>[^ \n\t] {printf("Line %d Syntax Error %s", linecount, yytext); return 0;}
 
-<var>begin{space}* BEGIN pblock;
+<var>begin{space}* {printf("Line: %d Lexeme: %s Token Type: KEYWORD\n", linecount, yytext); BEGIN pblock;}
 <var>{keywrd}({space}|,) {printf("Line %d Syntax Error %s", linecount, yytext); return 0;}
-<var>{letter}({letter}*|{number}*|_*)*{space} {printf("Variable"); yytext[yyleng-1] = '\0'; addVariable(yytext); } //currently assumes that there will be spaces before the colon
-<var>{letter}({letter}*|{number}*|_*)*, {printf("Variable"); yytext[yyleng-1] = '\0'; addVariable(yytext); BEGIN commavar;} //currently assumes that there will be spaces before the
+<var>{letter}({letter}*|{number}*|_*)*{space} { addVariable(yytext); printf("Line: %d Lexeme: %s Token Type: IDENTIFIER\n", linecount, yytext);} //currently assumes that there will be spaces before the colon
+<var>{letter}({letter}*|{number}*|_*)*/, {addVariable(yytext); printf("Line: %d Lexeme: %s Token Type: IDENTIFIER\n", linecount, yytext); BEGIN commavar;} //currently assumes that there will be spaces before the
 
-<commavar>{letter}({letter}*|{number}*|_*)*{space} {printf("Variable"); yytext[yyleng-1] = '\0'; addVariable(yytext); BEGIN var;} //currently assumes that there will be spaces before the colon
-<commavar>{letter}({letter}*|{number}*|_*)*, {printf("Variable"); yytext[yyleng-1] = '\0'; addVariable(yytext);} //currently assumes that there will be spaces before the
+<commavar>{letter}({letter}*|{number}*|_*)*{space} { addVariable(yytext); printf("Line: %d Lexeme: %s Token Type: IDENTIFIER\n", linecount, yytext); BEGIN var;} //currently assumes that there will be spaces before the colon
+<commavar>{letter}({letter}*|{number}*|_*)*/, {addVariable(yytext); printf("Line: %d Lexeme: %s Token Type: IDENTIFIER\n", linecount, yytext);} //currently assumes that there will be spaces before the
+<commavar,var>, {printf("Line: %d Lexeme: %s Token Type: PUNCTUATOR\n", linecount, yytext);}
 <commavar>[^ \n\t] {printf("Line %d Syntax Error %s", linecount, yytext); printVariableList(); return 0; }
-<var>{space}*:{space}* {BEGIN vartype;} 
-<vartype>(char|integer|boolean|real); {printf("Type"); BEGIN var;}
+<var>: {printf("Line: %d Lexeme: %s Token Type: PUNCTUATOR\n", linecount, yytext); BEGIN vartype;} 
+<vartype>(char|integer|boolean|real); {printf("Line: %d Lexeme: %s Token Type: KEYWORD\n", linecount, yytext); BEGIN var;}
 <vartype>[^ \n\t] {printf("Line %d Syntax Error %s", linecount, yytext); return 0;}
 
 
 <var>[^ \n\t] {printf("Line %d Syntax Error %s", linecount, yytext); return 0;} //STARTING THE BEGIN BLOCK NOW
 
+<pblock>Write\(\".*\"\); {printf("Line: %d Lexeme: Write Token Type: KEYWORD\n", linecount);} //do we do the one with a variable inside with states? Do we have to check if variable actually present? Idk.
+<pblock>read\(.*\); {printf("Line: %d Lexeme: read Token Type: KEYWORD\n", linecount);}
+<pblock>{letter}({letter}*|{number}*|_*)*/{space}*:= {printf("Line: %d Lexeme: %s Token Type: IDENTIFIER\n", linecount, yytext); BEGIN assmtpunc;}
+<assmtpunc>:= {printf("Line: %d Lexeme: %s Token Type: PUNCTUATOR\n", linecount, yytext); BEGIN assmt;} 
+<assmtpunc>[^ \n\t] {printf("Line %d Syntax Error %s", linecount, yytext); return 0;}
+<assmt>{letter}({letter}*|{number}*|_*)*; {printf("Line: %d Lexeme: %s Token Type: IDENTIFIER\n", linecount, yytext); BEGIN pblock;}
+<assmt>{number}+; {printf("Line: %d Lexeme: %s Token Type: NUMBER\n", linecount, yytext); BEGIN pblock;}
+<assmt>[^ \n\t] {printf("Line %d Syntax Error %s", linecount, yytext); return 0;}
 
 
-<prog,prevar,var,vartype,commavar,pblock>\n {printf("\n"); linecount++;}
+
+
+<pblock>[^ \n\t] {printf("Line %d Syntax Error %s", linecount, yytext); return 0;}
+
+<prog,prevar,var,vartype,commavar,pblock,assmtpunc,assmt>\n {printf("\n"); linecount++;}
+<prog,prevar,var,vartype,commavar,pblock,assmtpunc,assmt>{space} {}
 [^ \n\t] {printf("Line %d Syntax Error %s", linecount, yytext); return 0;}
 . {}
 
