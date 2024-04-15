@@ -1,0 +1,14 @@
+ program AddTwoNumbers;
+ var
+ num1, Num2, sum: Integer;
+ begin
+ Write("Enter the first number: ");
+ read(nUm1);
+ Write("Enter the second number: ");
+ read(nuM2);
+ // Perform addition
+ sum := num1 + num2;
+ // Display the result
+ Write("The sum is ");
+ write(sum)
+ end.
