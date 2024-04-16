@@ -4,7 +4,13 @@
     #include <stdlib.h>
     int yylex();
 
-    void yyerror(char *s);
+    void yyerror();
+
+    void checkTop(char *s1, char *s2){
+         if(!strcmp(s1, s2)==0){
+            yyerror();
+         }
+    }
 %}
 
 %token KEYWORD IDENTIFIER PUNCTUATOR
@@ -16,17 +22,33 @@
 
 %%
 
-S: KEYWORD IDENTIFIER PUNCTUATOR {
+start: KEYWORD IDENTIFIER PUNCTUATOR body {
     if(
-        (strcmp($<string>1,"program") == 0) && (strcmp($<string>3,";") == 0)
+       !((strcmp($<string>1,"program") == 0) && (strcmp($<string>3,";") == 0))
     ){
-    printf("%s %s\n", $<string>1, $<string>3);
-    }else{
-        printf("Syntax error\n");
-        yyerror("a");
-    }
+        printf("Asfd");
+        yyerror();
+    };
 }
 
+body: KEYWORD decllist KEYWORD mainsrc KEYWORD{
+    if(!((strcmp($<string>1, "var") == 0) && (strcmp($<string>2, "begin") == 0) && (strcmp($<string>3, "end") == 0))){
+        yyerror();
+    };
+}
+
+decllist: 
+    | decl decllist {}
+
+decl: vars PUNCTUATOR {checkTop($<string>1, ":");} type PUNCTUATOR {checkTop($<string>1, ";");}
+
+vars:  vars PUNCTUATOR IDENTIFIER
+    | IDENTIFIER
+    
+
+type: KEYWORD
+
+mainsrc: {}
 %%
 
 void main(){
@@ -34,7 +56,7 @@ void main(){
     yyparse();
 }
 
-void yyerror(char *s){
+void yyerror(){
     printf("Syntax error\n");
 }
 
