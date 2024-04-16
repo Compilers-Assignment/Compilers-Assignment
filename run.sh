@@ -1,4 +1,4 @@
-lex t1.l
 yacc -d yacc.y
-cc lex.yy.c y.tab.h -ll
+lex t1.l
+cc lex.yy.c y.tab.c -ll
 ./a.out
