@@ -5,55 +5,72 @@
     int yylex();
 
     void yyerror();
-
-    void checkTop(char *s1, char *s2){
-         if(!strcmp(s1, s2)==0){
-            printf("Error at %s and %s",s1,s2);
-            yyerror();
-         }
-    }
 %}
 
-%token KEYWORD IDENTIFIER PUNCTUATOR BOOLOP INTLITERAL RELOP ASGOP ARITHOP
+%token PROGRAM INTEGER REAL BOOLEAN CHAR TO DOWNTO IF ELSE VAR WHILE FOR DO ARRAY BEG END READ WRITE THEN AND OR NOT INTLITERAL IDENTIFIER ADDOP MULOP RELOP ASGOP SEMICOLON COLON LBRACKET RBRACKET COMMA LPAREN RPAREN PERIOD STRING
 
-%union {
+%union{
     char *string;
     int integer;
 }
 
 %%
 
-start: 'program'IDENTIFIER PUNCTUATOR {
-    // if(
-    //    !((strcmp($<string>1,"program") == 0) && (strcmp($<string>3,";") == 0))
-    // ){
-    //     printf("Asfd");
-    //     yyerror();
-    // };
-} body 
+start: PROGRAM IDENTIFIER SEMICOLON body
+body: VAR declList BEG nonEmptySrcWithIf END PERIOD
+declList: 
+        | decl declList
+decl: vars COLON type SEMICOLON
+vars: vars COMMA IDENTIFIER | IDENTIFIER
+type: INTEGER | BOOLEAN | REAL | CHAR
+assignment: IDENTIFIER ASGOP expression SEMICOLON
+expression: expression ADDOP tExpression | tExpression
+tExpression: tExpression MULOP fExpression | fExpression
+fExpression: LPAREN expression RPAREN | IDENTIFIER | INTLITERAL 
+printable: IDENTIFIER | STRING
+range: TO | DOWNTO
+cond: IDENTIFIER RELOP IDENTIFIER 
+    | IDENTIFIER RELOP INTLITERAL
+    | INTLITERAL RELOP IDENTIFIER
+    | INTLITERAL RELOP INTLITERAL
 
-body: KEYWORD {checkTop($<string>1, "var");}decllist KEYWORD {checkTop($<string>1, "begin");}mainsrc KEYWORD {checkTop($<string>1, "end");}
+nonEmptySrcWithIf: ruleWithIf srcWithIf 
+srcWithIf: 
+    | ruleWithIf srcWithIf
+ruleWithIf: WRITE LPAREN printable RPAREN SEMICOLON
+    | READ LPAREN IDENTIFIER RPAREN SEMICOLON
+    | ifCond
+    | forLoopWithIf
+    | whileLoopWithIf
+    | assignment
 
-decllist: 
-    | decl decllist {}
+ifCond: matched | unmatched
+matched: IF cond THEN matched ELSE matched | BEG nonEmptySrcWithoutIf END
+unmatched: IF cond THEN ifCond
+        | IF cond THEN matched ELSE unmatched
+forLoopWithIf: FOR assignment range expression DO BEG nonEmptySrcWithIf END SEMICOLON
+whileLoopWithIf: WHILE LPAREN cond RPAREN DO BEG nonEmptySrcWithIf END SEMICOLON
 
-decl: vars ':' {printf("This is string 1 here %s\n",$<string>2);checkTop($<string>1, ":");} type PUNCTUATOR {checkTop($<string>1, ";");}
+nonEmptySrcWithoutIf: ruleWithoutIf srcWithoutIf 
+srcWithoutIf: 
+    | ruleWithoutIf srcWithoutIf
+ruleWithoutIf: WRITE LPAREN printable RPAREN SEMICOLON
+    | READ LPAREN IDENTIFIER RPAREN SEMICOLON
+    | forLoopWithoutIf
+    | whileLoopWithoutIf
+    | assignment
 
-vars:  vars PUNCTUATOR IDENTIFIER
-    | IDENTIFIER
-    
+forLoopWithoutIf: FOR assignment range expression DO BEG nonEmptySrcWithoutIf END SEMICOLON
+whileLoopWithoutIf: WHILE LPAREN cond RPAREN DO BEG nonEmptySrcWithoutIf END SEMICOLON
 
-type: KEYWORD
 
-mainsrc: {}
 %%
 
 void main(){
-    printf("hello world\n");
     yyparse();
 }
 
-void yyerror(char * s){
+void yyerror(){
     printf("Syntax error\n");
 }
 
