@@ -3,6 +3,8 @@
     #include <string.h>
     #include <stdlib.h>
     int yylex();
+
+    void yyerror(char *s);
 %}
 
 %token KEYWORD IDENTIFIER PUNCTUATOR
@@ -15,16 +17,14 @@
 %%
 
 S: KEYWORD IDENTIFIER PUNCTUATOR {
-    printf("jijijijiji");
     if(
         (strcmp($<string>1,"program") == 0) && (strcmp($<string>3,";") == 0)
     ){
     printf("%s %s\n", $<string>1, $<string>3);
     }else{
         printf("Syntax error\n");
-        yyerror();
+        yyerror("a");
     }
-    printf("hihihihihih");
 }
 
 %%
@@ -32,7 +32,6 @@ S: KEYWORD IDENTIFIER PUNCTUATOR {
 void main(){
     printf("hello world\n");
     yyparse();
-    return 0;
 }
 
 void yyerror(char *s){
