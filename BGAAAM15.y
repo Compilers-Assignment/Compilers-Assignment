@@ -3,6 +3,7 @@
     #include <string.h>
     #include <stdlib.h>
     int yylex();
+    extern FILE *yyin;
 
     void yyerror();
 %}
@@ -67,11 +68,14 @@ whileLoopWithoutIf: WHILE LPAREN cond RPAREN DO BEG nonEmptySrcWithoutIf END SEM
 %%
 
 void main(){
+    yyin = fopen("sample2.txt", "r");
     yyparse();
+    printf("Valid input\n");
 }
 
-void yyerror(){
+void yyerror(char *s){
     printf("Syntax error\n");
+    exit(1);
 }
 
 
