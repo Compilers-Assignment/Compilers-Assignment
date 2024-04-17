@@ -1,7 +1,17 @@
 %{
     #include "y.tab.h"
+    #include <stdio.h>
+    #include <string.h>
     int linecount = 1;
     int yylex();
+    void convertToLower(char * s)
+    {
+        for(int i = 0; s[i]; i++)
+        {
+            if (s[i]>='A' && s[i]<='Z')
+                s[i] = s[i] + ('a' - 'A');
+        }
+    }
 %}
 
 %option caseless
@@ -11,14 +21,14 @@ number [0-9]
 
 %%
 
+\/\/.* {}
 \n {linecount++;}
-
 \".*\" {return STRING;}
 
 (program|integer|real|boolean|char|to|downto|if|else|var|while|for|do|array|begin|end|read|write|then) { 
     
     printf("%d %s keyword\n", linecount, yytext); 
-
+    convertToLower(yytext);
     if(strcmp(yytext, "program") == 0) return PROGRAM;
     if(strcmp(yytext, "integer") == 0) return INTEGER;
     if(strcmp(yytext, "real") == 0) return REAL;
@@ -44,14 +54,14 @@ number [0-9]
 (and|or|not) {
 
     printf("%d %s boolean operator\n", linecount, yytext); 
-
+    convertToLower(yytext);
     if(strcmp(yytext, "and") == 0) return AND;
     if(strcmp(yytext, "or") == 0) return OR;
     if(strcmp(yytext, "not") == 0) return NOT;
 }
 
 {number}* {
-
+    
     printf("%d %s integer literal\n", linecount, yytext); 
 
     return INTLITERAL;
@@ -67,6 +77,7 @@ number [0-9]
 ("+"|"-"|"*"|"/"|"%") {
 
     printf("%d %s arithmetic operator\n", linecount, yytext);  
+    convertToLower(yytext);
 
     if (strcmp(yytext, "+") == 0) return ADDOP;
     if (strcmp(yytext, "-") == 0) return ADDOP;
@@ -92,6 +103,7 @@ number [0-9]
 (";"|:|[|]|,|"("|")"|".") {
 
     printf("%d %s punctuator\n", linecount, yytext); 
+    convertToLower(yytext);
 
     if (strcmp(yytext, ";") == 0) return SEMICOLON;
     if (strcmp(yytext, ":") == 0) return COLON;
