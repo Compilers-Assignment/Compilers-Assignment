@@ -25,7 +25,7 @@ decl: vars COLON type SEMICOLON | vars COLON ARRAY LBRACKET INTLITERAL PERIOD PE
 vars: vars COMMA IDENTIFIER | IDENTIFIER
 type: INTEGER | BOOLEAN | REAL | CHAR
 assignment: IDENTIFIER ASGOP expression SEMICOLON
-expression: expression ADDOP tExpression | tExpression
+expression: expression ADDOP tExpression | tExpression  
 tExpression: tExpression MULOP fExpression | fExpression
 fExpression: LPAREN expression RPAREN | readable | INTLITERAL
 printable: readable | STRING | printable COMMA readable | printable COMMA STRING
@@ -45,17 +45,31 @@ ruleWithIf: WRITE LPAREN printable RPAREN SEMICOLON
     | whileLoopWithIf
     | assignment
 
+nonsrcWithIf: 
+    | nonIf nonsrcWithIf
+
+nonIf: WRITE LPAREN printable RPAREN SEMICOLON
+    | READ LPAREN readable RPAREN SEMICOLON
+    | forLoopWithIf
+    | whileLoopWithIf
+    | assignment
+
 readable: IDENTIFIER 
     | IDENTIFIER LBRACKET indexing RBRACKET 
 
 indexing: IDENTIFIER 
     | INTLITERAL
-ifCond: matched | unmatched
-matched: IF cond THEN matched ELSE matched| BEG nonEmptySrcWithoutIf END
-unmatched: IF cond THEN ifCond
-        | IF cond THEN matched ELSE unmatched
+/* ifCond: matched | unmatched
+matched: IF cond THEN BEG matched END ELSE BEG matched END SEMICOLON | nonEmptySrcWithoutIf
+unmatched: IF cond THEN BEG ifCond END SEMICOLON
+        | IF cond THEN BEG matched END ELSE BEG unmatched END SEMICOLON */
+ifCond: IF cond THEN BEG matched END SEMICOLON | IF cond THEN BEG matched END ELSE BEG tail END SEMICOLON
+matched: IF cond THEN BEG matched END ELSE BEG matched END SEMICOLON | nonsrcWithIf
+tail: IF cond THEN BEG tail END SEMICOLON | nonsrcWithIf
+
 forLoopWithIf: FOR IDENTIFIER ASGOP expression range expression DO BEG nonEmptySrcWithIf END SEMICOLON
 whileLoopWithIf: WHILE LPAREN cond RPAREN DO BEG nonEmptySrcWithIf END SEMICOLON
+    | WHILE cond DO BEG nonEmptySrcWithIf END SEMICOLON
 
 nonEmptySrcWithoutIf: ruleWithoutIf srcWithoutIf 
 srcWithoutIf: 
