@@ -25,7 +25,7 @@ number [0-9]
 \n {linecount++;}
 \".*\" {return STRING;}
 
-(program|integer|real|boolean|char|to|downto|if|else|var|while|for|do|array|begin|end|read|write|then) { 
+(program|integer|real|boolean|char|to|downto|if|else|var|while|for|do|array|begin|end|read|write|then|array|of) { 
     
     printf("%d %s keyword\n", linecount, yytext); 
     convertToLower(yytext);
@@ -48,6 +48,8 @@ number [0-9]
     if(strcmp(yytext, "read") == 0) return READ;
     if(strcmp(yytext, "write") == 0) return WRITE;
     if(strcmp(yytext, "then") == 0) return THEN;
+    if(strcmp(yytext, "array") == 0) return ARRAY;
+    if(strcmp(yytext, "of") == 0) return OF;
 }
 
 
@@ -100,8 +102,7 @@ number [0-9]
     return ASGOP;
 }
 
-(";"|:|[|]|,|"("|")"|".") {
-
+(";"|:|"["|"]"|,|"("|")"|".") {
     printf("%d %s punctuator\n", linecount, yytext); 
     convertToLower(yytext);
 
