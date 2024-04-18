@@ -25,15 +25,28 @@ decl: vars COLON type SEMICOLON | vars COLON ARRAY LBRACKET INTLITERAL PERIOD PE
 vars: vars COMMA IDENTIFIER | IDENTIFIER
 type: INTEGER | BOOLEAN | REAL | CHAR
 assignment: IDENTIFIER ASGOP expression SEMICOLON
-expression: expression ADDOP tExpression | tExpression  
+
+expression: arith_expression | bool_exp
+
+arith_expression: arith_expression ADDOP tExpression | tExpression  
 tExpression: tExpression MULOP fExpression | fExpression
-fExpression: LPAREN expression RPAREN | readable | INTLITERAL
+fExpression: LPAREN arith_expression RPAREN | readable | INTLITERAL
+
+bool_exp: term
+    | bool_exp OR term
+term: factor
+    | term AND factor
+factor: cond
+    | NOT factor
+    | LPAREN bool_exp RPAREN
+
 printable: readable | STRING | printable COMMA readable | printable COMMA STRING
 range: TO | DOWNTO
-cond: readable RELOP readable 
+/* cond: readable RELOP readable 
     | readable RELOP INTLITERAL
     | INTLITERAL RELOP readable
-    | INTLITERAL RELOP INTLITERAL
+    | INTLITERAL RELOP INTLITERAL */
+cond: arith_expression RELOP arith_expression
 
 nonEmptySrcWithIf: ruleWithIf srcWithIf 
 srcWithIf: 
@@ -71,7 +84,7 @@ forLoopWithIf: FOR IDENTIFIER ASGOP expression range expression DO BEG nonEmptyS
 whileLoopWithIf: WHILE LPAREN cond RPAREN DO BEG nonEmptySrcWithIf END SEMICOLON
     | WHILE cond DO BEG nonEmptySrcWithIf END SEMICOLON
 
-nonEmptySrcWithoutIf: ruleWithoutIf srcWithoutIf 
+/* nonEmptySrcWithoutIf: ruleWithoutIf srcWithoutIf 
 srcWithoutIf: 
     | ruleWithoutIf srcWithoutIf
 ruleWithoutIf: WRITE LPAREN printable RPAREN SEMICOLON
@@ -81,7 +94,7 @@ ruleWithoutIf: WRITE LPAREN printable RPAREN SEMICOLON
     | assignment
 
 forLoopWithoutIf: FOR IDENTIFIER ASGOP expression range expression DO BEG nonEmptySrcWithoutIf END SEMICOLON
-whileLoopWithoutIf: WHILE LPAREN cond RPAREN DO BEG nonEmptySrcWithoutIf END SEMICOLON
+whileLoopWithoutIf: WHILE LPAREN cond RPAREN DO BEG nonEmptySrcWithoutIf END SEMICOLON */
 
 
 %%
