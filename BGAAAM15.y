@@ -76,13 +76,12 @@ indexing: IDENTIFIER
 matched: IF cond THEN BEG matched END ELSE BEG matched END SEMICOLON | nonEmptySrcWithoutIf
 unmatched: IF cond THEN BEG ifCond END SEMICOLON
         | IF cond THEN BEG matched END ELSE BEG unmatched END SEMICOLON */
-ifCond: IF cond THEN BEG matched END SEMICOLON | IF cond THEN BEG matched END ELSE BEG tail END SEMICOLON
-matched: IF cond THEN BEG matched END ELSE BEG matched END SEMICOLON | nonsrcWithIf
-tail: IF cond THEN BEG tail END SEMICOLON | nonsrcWithIf
+ifCond: IF bool_exp THEN BEG matched END SEMICOLON | IF bool_exp THEN BEG matched END ELSE BEG tail END SEMICOLON
+matched: IF bool_exp THEN BEG matched END ELSE BEG matched END SEMICOLON | nonsrcWithIf
+tail: IF bool_exp THEN BEG tail END SEMICOLON | nonsrcWithIf
 
 forLoopWithIf: FOR IDENTIFIER ASGOP expression range expression DO BEG nonEmptySrcWithIf END SEMICOLON
-whileLoopWithIf: WHILE LPAREN cond RPAREN DO BEG nonEmptySrcWithIf END SEMICOLON
-    | WHILE cond DO BEG nonEmptySrcWithIf END SEMICOLON
+whileLoopWithIf: WHILE bool_exp DO BEG nonEmptySrcWithIf END SEMICOLON
 
 /* nonEmptySrcWithoutIf: ruleWithoutIf srcWithoutIf 
 srcWithoutIf: 
