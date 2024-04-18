@@ -8,7 +8,7 @@
     void yyerror();
 %}
 
-%token PROGRAM INTEGER REAL BOOLEAN CHAR TO DOWNTO IF ELSE VAR WHILE FOR DO ARRAY BEG END READ WRITE THEN AND OR NOT INTLITERAL IDENTIFIER ADDOP MULOP RELOP ASGOP SEMICOLON COLON LBRACKET RBRACKET COMMA LPAREN RPAREN PERIOD STRING OF
+%token PROGRAM INTEGER REAL BOOLEAN CHAR TO DOWNTO IF ELSE VAR WHILE FOR DO ARRAY BEG END READ WRITE THEN AND OR NOT INTLITERAL IDENTIFIER ADDOP MULOP RELOP ASGOP SEMICOLON COLON LBRACKET RBRACKET COMMA LPAREN RPAREN PERIOD STRING OF CHAR_LIT
 
 %union{
     char *string;
@@ -30,7 +30,7 @@ expression: arith_expression | bool_exp
 
 arith_expression: arith_expression ADDOP tExpression | tExpression  
 tExpression: tExpression MULOP fExpression | fExpression
-fExpression: LPAREN arith_expression RPAREN | readable | INTLITERAL
+fExpression: LPAREN arith_expression RPAREN | readable | INTLITERAL | CHAR_LIT
 
 bool_exp: term
     | bool_exp OR term
@@ -40,7 +40,7 @@ factor: cond
     | NOT factor
     | LPAREN bool_exp RPAREN
 
-printable: readable | STRING | printable COMMA readable | printable COMMA STRING
+printable: STRING | printable COMMA readable | printable COMMA STRING | arith_expression
 range: TO | DOWNTO
 /* cond: readable RELOP readable 
     | readable RELOP INTLITERAL
@@ -76,12 +76,14 @@ indexing: IDENTIFIER
 matched: IF cond THEN BEG matched END ELSE BEG matched END SEMICOLON | nonEmptySrcWithoutIf
 unmatched: IF cond THEN BEG ifCond END SEMICOLON
         | IF cond THEN BEG matched END ELSE BEG unmatched END SEMICOLON */
-ifCond: IF bool_exp THEN BEG matched END SEMICOLON | IF bool_exp THEN BEG matched END ELSE BEG tail END SEMICOLON
-matched: IF bool_exp THEN BEG matched END ELSE BEG matched END SEMICOLON | nonsrcWithIf
-tail: IF bool_exp THEN BEG tail END SEMICOLON | nonsrcWithIf
+ifCond: IF conditionals THEN BEG matched END SEMICOLON | IF conditionals THEN BEG matched END ELSE BEG tail END SEMICOLON
+matched: IF conditionals THEN BEG matched END ELSE BEG matched END SEMICOLON | nonsrcWithIf
+tail: IF conditionals THEN BEG tail END SEMICOLON | nonsrcWithIf
 
-forLoopWithIf: FOR IDENTIFIER ASGOP expression range expression DO BEG nonEmptySrcWithIf END SEMICOLON
-whileLoopWithIf: WHILE bool_exp DO BEG nonEmptySrcWithIf END SEMICOLON
+forLoopWithIf: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG nonEmptySrcWithIf END SEMICOLON
+whileLoopWithIf: WHILE conditionals DO BEG nonEmptySrcWithIf END SEMICOLON
+
+conditionals: expression
 
 /* nonEmptySrcWithoutIf: ruleWithoutIf srcWithoutIf 
 srcWithoutIf: 
