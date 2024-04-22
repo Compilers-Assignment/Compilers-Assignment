@@ -38,7 +38,7 @@ term: factor
     | term AND factor
 factor: cond
     | NOT factor
-    | LPAREN bool_exp RPAREN
+    | LPAREN bool_exp RPAREN | IDENTIFIER
 
 printable: STRING | printable COMMA readable | printable COMMA STRING | arith_expression
 range: TO | DOWNTO
@@ -48,7 +48,8 @@ range: TO | DOWNTO
     | INTLITERAL RELOP INTLITERAL */
 cond: arith_expression RELOP arith_expression
 
-nonEmptySrcWithIf: ruleWithIf srcWithIf 
+nonEmptySrcWithIf: 
+    | ruleWithIf srcWithIf 
 srcWithIf: 
     | ruleWithIf srcWithIf
 ruleWithIf: WRITE LPAREN printable RPAREN SEMICOLON
@@ -57,6 +58,7 @@ ruleWithIf: WRITE LPAREN printable RPAREN SEMICOLON
     | forLoopWithIf
     | whileLoopWithIf
     | assignment
+    | BEG nonEmptySrcWithIf END
 
 nonsrcWithIf: 
     | nonIf nonsrcWithIf
@@ -66,6 +68,7 @@ nonIf: WRITE LPAREN printable RPAREN SEMICOLON
     | forLoopWithIf
     | whileLoopWithIf
     | assignment
+    | BEG nonEmptySrcWithIf END
 
 readable: IDENTIFIER 
     | IDENTIFIER LBRACKET indexing RBRACKET 
@@ -83,7 +86,7 @@ tail: IF conditionals THEN BEG tail END SEMICOLON | nonsrcWithIf
 forLoopWithIf: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG nonEmptySrcWithIf END SEMICOLON
 whileLoopWithIf: WHILE conditionals DO BEG nonEmptySrcWithIf END SEMICOLON
 
-conditionals: expression
+conditionals: bool_exp
 
 /* nonEmptySrcWithoutIf: ruleWithoutIf srcWithoutIf 
 srcWithoutIf: 
@@ -101,13 +104,14 @@ whileLoopWithoutIf: WHILE LPAREN cond RPAREN DO BEG nonEmptySrcWithoutIf END SEM
 %%
 
 void main(){
-    yyin = fopen("sample2.txt", "r");
+    yyin = fopen("sample.txt", "r");
     yyparse();
-    printf("Valid input\n");
+    printf("valid input\n");
+    fclose(yyin);
 }
 
 void yyerror(char *s){
-    printf("Syntax error\n");
+    printf("syntax error\n");
     exit(1);
 }
 

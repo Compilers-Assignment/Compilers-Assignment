@@ -12,6 +12,7 @@
                 s[i] = s[i] + ('a' - 'A');
         }
     }
+    int ctr=0;
 %}
 
 %option caseless
@@ -24,11 +25,13 @@ number [0-9]
 \/\/.* {}
 \n {linecount++;}
 \".*\" {return STRING;}
-\'[0-9a-zA-Z]\' {printf("%d %s character literal\n", linecount, yytext); return CHAR_LIT;}
+\'[0-9a-zA-Z]\' {
+    // printf("%d %s character literal\n", linecount, yytext); 
+return CHAR_LIT;}
 
-(program|integer|real|boolean|char|to|downto|if|else|var|while|for|do|array|begin|end|read|write|then|array|of) { 
+(program|integer|real|boolean|char|to|downto|if|else|var|while|for|do|array|begin|end|read|write|then|array|of|writeln) { 
     
-    printf("%d %s keyword\n", linecount, yytext); 
+    // printf("%d %s keyword\n", linecount, yytext); 
     convertToLower(yytext);
     if(strcmp(yytext, "program") == 0) return PROGRAM;
     if(strcmp(yytext, "integer") == 0) return INTEGER;
@@ -48,6 +51,7 @@ number [0-9]
     if(strcmp(yytext, "end") == 0) return END;
     if(strcmp(yytext, "read") == 0) return READ;
     if(strcmp(yytext, "write") == 0) return WRITE;
+    if(strcmp(yytext, "writeln") == 0) return WRITE;
     if(strcmp(yytext, "then") == 0) return THEN;
     if(strcmp(yytext, "array") == 0) return ARRAY;
     if(strcmp(yytext, "of") == 0) return OF;
@@ -56,7 +60,7 @@ number [0-9]
 
 (and|or|not) {
 
-    printf("%d %s boolean operator\n", linecount, yytext); 
+    // printf("%d %s boolean operator\n", linecount, yytext); 
     convertToLower(yytext);
     if(strcmp(yytext, "and") == 0) return AND;
     if(strcmp(yytext, "or") == 0) return OR;
@@ -65,21 +69,21 @@ number [0-9]
 
 {number}* {
     
-    printf("%d %s integer literal\n", linecount, yytext); 
+    // printf("%d %s integer literal\n", linecount, yytext); 
 
     return INTLITERAL;
 }
 
 {letter}({letter}|{number}|_)* {
 
-    printf("%d %s identifier\n", linecount, yytext); 
+    // // printf("%d %s identifier\n", linecount, yytext); 
 
     return IDENTIFIER;
 }
 
 ("+"|"-"|"*"|"/"|"%") {
 
-    printf("%d %s arithmetic operator\n", linecount, yytext);  
+    // printf("%d %s arithmetic operator\n", linecount, yytext);  
     convertToLower(yytext);
 
     if (strcmp(yytext, "+") == 0) return ADDOP;
@@ -91,20 +95,20 @@ number [0-9]
 
 (=|<>|<|>|<=|>=) {
 
-    printf("%d %s relational operator\n", linecount, yytext);
+    // printf("%d %s relational operator\n", linecount, yytext);
 
     return RELOP;
 }
 
 := {
 
-    printf("%d %s assignment operator\n", linecount, yytext); 
+    // printf("%d %s assignment operator\n", linecount, yytext); 
 
     return ASGOP;
 }
 
 (";"|:|"["|"]"|,|"("|")"|".") {
-    printf("%d %s punctuator\n", linecount, yytext); 
+    // printf("%d %s punctuator\n", linecount, yytext); 
     convertToLower(yytext);
 
     if (strcmp(yytext, ";") == 0) return SEMICOLON;
@@ -117,5 +121,14 @@ number [0-9]
     if (strcmp(yytext, ".") == 0) return PERIOD;
 }
 
-. {;}
+" "* {;}
+
+[ \r] {;}
+
+. {
+    // ctr++;
+    printf("syntax error\n");
+    exit(0);
+    // printf("%d\n",ctr);
+    }
 %%

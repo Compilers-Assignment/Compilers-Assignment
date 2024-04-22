@@ -2,3 +2,5 @@ a.out
 lex.yy.c
 y.tab.c
 y.tab.h
+run.sh
+run.sh
