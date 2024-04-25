@@ -86,11 +86,26 @@ return CHAR_LIT;}
     // printf("%d %s arithmetic operator\n", linecount, yytext);  
     convertToLower(yytext);
 
-    if (strcmp(yytext, "+") == 0) return ADDOP;
-    if (strcmp(yytext, "-") == 0) return ADDOP;
-    if (strcmp(yytext, "*") == 0) return MULOP;
-    if (strcmp(yytext, "/") == 0) return MULOP;
-    if (strcmp(yytext, "%") == 0) return MULOP;
+    if (strcmp(yytext, "+") == 0) {
+        yylval.string = "+";
+        return ADDOP;
+    }
+    if (strcmp(yytext, "-") == 0) {
+        yylval.string = "-";
+        return ADDOP;
+    }
+    if (strcmp(yytext, "*") == 0) {
+        yylval.string = "*"
+        return MULOP
+    };
+    if (strcmp(yytext, "/") == 0) {
+        yylval.string = "/"
+        return MULOP
+    };
+    if (strcmp(yytext, "%") == 0) {
+        yylval.string = "%"
+        return MULOP
+    };
 }
 
 (=|<>|<|>|<=|>=) {

@@ -26,7 +26,7 @@ begin
   begin
     if numbers[i] <= maxValue then
     begin
-      maxValue := numbers[i] + 10;
+      maxValue := numbers[i] - 10;
       $ := 6;
     end;
   end;

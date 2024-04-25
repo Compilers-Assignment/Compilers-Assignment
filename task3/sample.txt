@@ -6,7 +6,7 @@ begin
   if i > 10 then
   begin
     i := 10;
-    i := i - 1;
+    i := i + 2;
     write(i);
   end
   else
