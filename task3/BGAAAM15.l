@@ -24,10 +24,16 @@ number [0-9]
 
 \/\/.* {}
 \n {linecount++;}
-\".*\" {return STRING;}
+\".*\" {
+    yylval.string = yytext;
+    return STRING;
+}
+
 \'[0-9a-zA-Z]\' {
     // printf("%d %s character literal\n", linecount, yytext); 
-return CHAR_LIT;}
+    yylval.string = yytext;
+    return CHAR_LIT;
+}
 
 (program|integer|real|boolean|char|to|downto|if|else|var|while|for|do|array|begin|end|read|write|then|array|of|writeln) { 
     
@@ -71,13 +77,14 @@ return CHAR_LIT;}
     
     // printf("%d %s integer literal\n", linecount, yytext); 
 
+    yylval.string = yytext;
     return INTLITERAL;
 }
 
 {letter}({letter}|{number}|_)* {
 
     // // printf("%d %s identifier\n", linecount, yytext); 
-
+    yylval.string = yytext;
     return IDENTIFIER;
 }
 
@@ -95,23 +102,40 @@ return CHAR_LIT;}
         return ADDOP;
     }
     if (strcmp(yytext, "*") == 0) {
-        yylval.string = "*"
-        return MULOP
+        yylval.string = "*";
+        return MULOP;
     };
     if (strcmp(yytext, "/") == 0) {
-        yylval.string = "/"
-        return MULOP
+        yylval.string = "/";
+        return MULOP;
     };
     if (strcmp(yytext, "%") == 0) {
-        yylval.string = "%"
-        return MULOP
+        yylval.string = "%";
+        return MULOP;
     };
 }
 
 (=|<>|<|>|<=|>=) {
 
     // printf("%d %s relational operator\n", linecount, yytext);
-
+    if(strcmp(yytext, "=") == 0){
+        yylval.string = "=";
+    }
+    if(strcmp(yytext, "<>") == 0){
+        yylval.string = "<>";
+    }
+    if(strcmp(yytext, "<") == 0){
+        yylval.string = "<";
+    }
+    if(strcmp(yytext, ">") == 0){
+        yylval.string = ">";
+    }
+    if(strcmp(yytext, "<=") == 0){
+        yylval.string = "<=";
+    }
+    if(strcmp(yytext, ">=") == 0){
+        yylval.string = ">=";
+    }
     return RELOP;
 }
 
