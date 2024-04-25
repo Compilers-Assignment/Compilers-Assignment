@@ -9,6 +9,7 @@
     int count = 0;
     int qind = 0;
     int tos = -1;
+    int label_count = 0;
     int temp_char = 0;
     struct quadruple
     {
@@ -116,11 +117,51 @@ fExpression: LPAREN arith_expression RPAREN
 
 bool_exp: term
     | bool_exp OR term
+    {
+        char * t0 = pop();
+        char * t1 = pop();
+        int new_temp = temp_char++;
+        printf("t%d=1\n",new_temp);
+        printf("if %s==1 goto L%d\n",t0,label_count);
+        printf("if %s==1 goto L%d\n",t1,label_count);
+        printf("t%d=0\n",new_temp);
+        printf("L%d:",label_count++);
+        char str[5];
+        sprintf(str,"t%d",new_temp);
+        push(str);
+    }
 term: factor
     | term AND factor
+    {
+        char * t0 = pop();
+        char * t1 = pop();
+        int new_temp = temp_char++;
+        printf("t%d=0\n",new_temp);
+        printf("if %s==0 goto L%d\n",t0,label_count);
+        printf("if %s==0 goto L%d\n",t1,label_count);
+        printf("t%d=1\n",new_temp);
+        printf("L%d:",label_count++);
+        char str[5];
+        sprintf(str,"t%d",new_temp);
+        push(str);
+    }
 factor: cond
     | NOT factor
-    | LPAREN bool_exp RPAREN | IDENTIFIER
+    {
+        char *t0 = pop();
+        int new_temp = temp_char++;
+        printf("t%d=1\n",new_temp);
+        printf("if %s==1 goto L%d\n",t0,label_count);
+        printf("t%d=0\n",new_temp);
+        printf("L%d:",label_count++);
+        char str[5];
+        sprintf(str,"t%d",new_temp);
+        push(str);
+        label_count++;
+    }
+    | LPAREN bool_exp RPAREN | IDENTIFIER {
+        push($<string>1);
+    }
 
 printable: STRING | printable COMMA readable | printable COMMA STRING | arith_expression
 range: TO | DOWNTO
@@ -129,6 +170,15 @@ range: TO | DOWNTO
     | INTLITERAL RELOP readable
     | INTLITERAL RELOP INTLITERAL */
 cond: arith_expression RELOP arith_expression
+    {
+        char str[5];
+        sprintf(str,"t%d",temp_char++);
+        char * a = pop();
+        char * b = pop();
+        addQuadruple(b,$<string>2,a,str);
+        display_Quad();
+        push(str);
+    }
 
 nonEmptySrcWithIf: 
     | ruleWithIf srcWithIf 
@@ -159,7 +209,13 @@ readable: IDENTIFIER
     | IDENTIFIER LBRACKET indexing RBRACKET 
 
 indexing: IDENTIFIER 
+    {
+        push($<string>1);
+    }
     | INTLITERAL
+    {
+        push($<string>1);
+    }
 /* ifCond: matched | unmatched
 matched: IF cond THEN BEG matched END ELSE BEG matched END SEMICOLON | nonEmptySrcWithoutIf
 unmatched: IF cond THEN BEG ifCond END SEMICOLON
