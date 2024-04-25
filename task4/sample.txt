@@ -1,0 +1,7 @@
+program Example9;
+var
+  i: Integer;
+begin
+  a := b and c;
+
+end.

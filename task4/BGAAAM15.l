@@ -25,13 +25,13 @@ number [0-9]
 \/\/.* {}
 \n {linecount++;}
 \".*\" {
-    yylval.string = yytext;
+    yylval.string = strdup(yytext);
     return STRING;
 }
 
 \'[0-9a-zA-Z]\' {
-    // printf("%d %s character literal\n", linecount, yytext); 
-    yylval.string = yytext;
+    // printf("%d %s character literal\n", linecount, strdup(yytext)); 
+    yylval.string = strdup(yytext);
     return CHAR_LIT;
 }
 
@@ -76,15 +76,14 @@ number [0-9]
 {number}* {
     
     // printf("%d %s integer literal\n", linecount, yytext); 
-
-    yylval.string = yytext;
+    yylval.string = strdup(yytext);
     return INTLITERAL;
 }
 
 {letter}({letter}|{number}|_)* {
 
     // // printf("%d %s identifier\n", linecount, yytext); 
-    yylval.string = yytext;
+    yylval.string = strdup(yytext);
     return IDENTIFIER;
 }
 

@@ -6,6 +6,53 @@
     extern FILE *yyin;
     int temp_ctr = 0;
     void yyerror();
+    int count = 0;
+    int qind = 0;
+    int tos = -1;
+    int temp_char = 0;
+    struct quadruple
+    {
+        char operator[5];
+        char operand1[10];
+        char operand2[10];
+        char result[10];
+    } quad[25];
+    struct stack
+    {
+        char c[10];
+    } stk[25];
+    void addQuadruple(char op1[], char op[], char op2[], char result[])
+    {
+        if (op!=NULL)
+        strcpy(quad[qind].operator, op);
+        else strcpy(quad[qind].operator,"");
+        if (op1!=NULL) strcpy(quad[qind].operand1, op1);
+        else strcpy(quad[qind].operand1,"");
+        if (op2!=NULL)
+        strcpy(quad[qind].operand2, op2);
+        else strcpy(quad[qind].operand2,"");
+        strcpy(quad[qind].result, result);
+        qind++;
+    }
+    void display_Quad()
+    {
+        printf("%s", quad[qind - 1].result);
+        printf(" = ");
+        printf("%s", quad[qind - 1].operand1);
+        printf("%s", quad[qind - 1].operator);
+        printf("%s\n", quad[qind - 1].operand2);
+    }
+    void push(char *c)
+    {
+        strcpy(stk[++tos].c, c);
+    }
+    char *pop()
+    {
+        char *c = stk[tos].c;
+        tos = tos - 1;
+        // printf("%s\n",c);
+        return c;
+    }
 %}
 
 %token PROGRAM INTEGER REAL BOOLEAN CHAR TO DOWNTO IF ELSE VAR WHILE FOR DO ARRAY BEG END READ WRITE THEN AND OR NOT INTLITERAL IDENTIFIER ADDOP MULOP RELOP ASGOP SEMICOLON COLON LBRACKET RBRACKET COMMA LPAREN RPAREN PERIOD STRING OF CHAR_LIT
@@ -13,26 +60,59 @@
 %union{
     char *string;
     int integer;
-    char *code;
-    int temp;
+    
 }
 
 %%
 
-start: PROGRAM IDENTIFIER SEMICOLON body {$<code>0 = $<code>4;}
-body: VAR declList BEG nonEmptySrcWithIf END PERIOD {$<code>0 = strcat("begin", strcat($<code>4, "end"));}
+start: PROGRAM IDENTIFIER SEMICOLON body 
+body: VAR declList BEG nonEmptySrcWithIf END PERIOD 
 declList: 
         | decl declList
 decl: vars COLON type SEMICOLON | vars COLON ARRAY LBRACKET INTLITERAL PERIOD PERIOD INTLITERAL RBRACKET OF type SEMICOLON
 vars: vars COMMA IDENTIFIER | IDENTIFIER
 type: INTEGER | BOOLEAN | REAL | CHAR
-assignment: IDENTIFIER ASGOP expression SEMICOLON
+assignment: IDENTIFIER ASGOP expression SEMICOLON 
+{
+    char * a = pop();
+    addQuadruple(a, NULL, NULL,$<string>1);
+    display_Quad();
+    push(a);
+}
 
 expression: arith_expression | bool_exp
 
-arith_expression: arith_expression ADDOP tExpression | tExpression  
-tExpression: tExpression MULOP fExpression | fExpression
-fExpression: LPAREN arith_expression RPAREN | readable | INTLITERAL | CHAR_LIT
+arith_expression: arith_expression ADDOP tExpression {
+    printf("arith_expression\n");
+    char str[5];
+    sprintf(str,"t%d",temp_char++);
+    char * a = pop();
+    char * b = pop();
+    addQuadruple(b,$<string>2, a ,str);
+    display_Quad();
+    push(str);
+}  
+    | tExpression  
+tExpression: tExpression MULOP fExpression {
+    char str[5];
+    sprintf(str,"t%d",temp_char++);
+    char * a = pop();
+    char * b = pop();
+    addQuadruple(b,$<string>2,a,str);
+    display_Quad();
+    push(str);
+    } 
+    | fExpression
+fExpression: LPAREN arith_expression RPAREN 
+    | readable 
+    | INTLITERAL 
+    {
+        push($<string>1);
+    }
+    | CHAR_LIT
+    {
+        push($<string>1);
+    }
 
 bool_exp: term
     | bool_exp OR term
@@ -73,6 +153,9 @@ nonIf: WRITE LPAREN printable RPAREN SEMICOLON
     | BEG nonEmptySrcWithIf END
 
 readable: IDENTIFIER 
+    {
+        push($<string>1);
+    }
     | IDENTIFIER LBRACKET indexing RBRACKET 
 
 indexing: IDENTIFIER 
