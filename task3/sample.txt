@@ -1,0 +1,17 @@
+program forif;
+var
+  i, j: Integer;
+  k, d: boolean;
+  f, t: array[1..10] of Integer;
+ 
+begin
+  for i := 1 to 20 do
+   begin
+     if i % 3 = 0 then 
+      begin
+        p := i + 2; 
+        write(j);
+      end;
+    end;
+
+end.
