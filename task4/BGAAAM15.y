@@ -11,6 +11,17 @@
     int tos = -1;
     int label_count = 0;
     int temp_char = 0;
+    int if_count = -1;
+    int label_stack_count = -1;
+    int label_stack[100];
+    void push_label(int label)
+    {
+        label_stack[++label_stack_count] = label;
+    }
+    int pop_label()
+    {
+        return label_stack[label_stack_count--];
+    }
     struct quadruple
     {
         char operator[5];
@@ -18,6 +29,7 @@
         char operand2[10];
         char result[10];
     } quad[25];
+    char if_stack[100][100];
     struct stack
     {
         char c[10];
@@ -43,12 +55,34 @@
         printf("%s", quad[qind - 1].operator);
         printf("%s\n", quad[qind - 1].operand2);
     }
+    void push_if(char *c)
+    {
+        if (strcmp(if_stack[if_count],"")==0)
+        {
+            strcpy(if_stack[if_count],c);
+        }
+        else
+        {
+            strcat(if_stack[if_count],c);
+        }
+    }
+    char * pop_if()
+    {
+        char *c = if_stack[if_count];
+        return c;
+    }
+    void clear_if()
+    {
+        strcpy(if_stack[if_count],"");
+    }
     void push(char *c)
     {
+        // printf("Pushing this %s\n",c);
         strcpy(stk[++tos].c, c);
     }
     char *pop()
     {
+        // printf("Popping this %s\n",stk[tos].c);
         char *c = stk[tos].c;
         tos = tos - 1;
         // printf("%s\n",c);
@@ -75,34 +109,65 @@ vars: vars COMMA IDENTIFIER | IDENTIFIER
 type: INTEGER | BOOLEAN | REAL | CHAR
 assignment: IDENTIFIER ASGOP expression SEMICOLON 
 {
-    char * a = pop();
-    addQuadruple(a, NULL, NULL,$<string>1);
-    display_Quad();
-    push(a);
+    if (if_count == -1)
+    {
+        char * a = pop();
+        addQuadruple(a, NULL, NULL,$<string>1);
+        display_Quad();
+        push(a);
+    }
+    else 
+    {
+        char * a = pop();
+        char str[50];
+        sprintf(str,"%s=%s\n",$<string>1,a);
+        push_if(str);
+    }
 }
 
 expression: arith_expression | bool_exp
 
 arith_expression: arith_expression ADDOP tExpression {
     printf("arith_expression\n");
-    char str[5];
-    sprintf(str,"t%d",temp_char++);
+    char str[20];
     char * a = pop();
     char * b = pop();
-    addQuadruple(b,$<string>2, a ,str);
-    display_Quad();
-    push(str);
+    if (if_count == -1)
+    {
+        sprintf(str,"t%d",temp_char++);
+        addQuadruple(b,$<string>2, a ,str);
+        display_Quad();
+        push(str);
+    }
+    else 
+    {
+        char temp[5];
+        sprintf(temp,"t%d",temp_char);
+        sprintf(str,"t%d=%s%s%s\n",temp_char++,b,$<string>2,a);
+        push(temp);
+        push_if(str);
+    }
 }  
-    | tExpression  
+    | tExpression
+
 tExpression: tExpression MULOP fExpression {
     char str[5];
     sprintf(str,"t%d",temp_char++);
     char * a = pop();
     char * b = pop();
-    addQuadruple(b,$<string>2,a,str);
-    display_Quad();
+    if (if_count == -1)
+    {
+        addQuadruple(b,$<string>2,a,str);
+        display_Quad();
+    }
+    else 
+    {
+        char temp[50];
+        sprintf(temp,"t%d=%s%s%s\n",temp_char-1,b,$<string>2,a);
+        push_if(temp);
+    }
     push(str);
-    } 
+} 
     | fExpression
 fExpression: LPAREN arith_expression RPAREN 
     | readable 
@@ -186,7 +251,7 @@ srcWithIf:
     | ruleWithIf srcWithIf
 ruleWithIf: WRITE LPAREN printable RPAREN SEMICOLON
     | READ LPAREN readable RPAREN SEMICOLON
-    | ifCond
+    | {if_count++;}ifCond
     | forLoopWithIf
     | whileLoopWithIf
     | assignment
@@ -220,7 +285,34 @@ indexing: IDENTIFIER
 matched: IF cond THEN BEG matched END ELSE BEG matched END SEMICOLON | nonEmptySrcWithoutIf
 unmatched: IF cond THEN BEG ifCond END SEMICOLON
         | IF cond THEN BEG matched END ELSE BEG unmatched END SEMICOLON */
-ifCond: IF conditionals THEN BEG matched END SEMICOLON | IF conditionals THEN BEG matched END ELSE BEG tail END SEMICOLON
+ifCond: IF conditionals THEN BEG matched END SEMICOLON
+    {
+        char * condition = pop();
+        printf("if %s==0 goto L%d\n",condition,label_count);
+        char * matched = pop_if();
+        printf("%s",matched);
+        printf("L%d:",label_count++);
+        if_count--;
+    }
+    | IF conditionals THEN BEG matched END ELSE BEG 
+    {
+        char * condition = pop();
+        printf("if %s==0 goto L%d\n",condition,label_count);
+        char * matched = pop_if();
+        printf("%s",matched);
+        printf("goto L%d\n",label_count+1);
+        printf("L%d:",label_count);
+        push_label(label_count+1);
+        label_count += 2;
+        clear_if();
+    }
+    tail END SEMICOLON
+    {
+        char * tail = pop_if();
+        printf("%s",tail);
+        printf("L%d:",pop_label());
+        if_count--;
+    }
 matched: IF conditionals THEN BEG matched END ELSE BEG matched END SEMICOLON | nonsrcWithIf
 tail: IF conditionals THEN BEG tail END SEMICOLON | nonsrcWithIf
 
@@ -247,7 +339,6 @@ whileLoopWithoutIf: WHILE LPAREN cond RPAREN DO BEG nonEmptySrcWithoutIf END SEM
 void main(){
     yyin = fopen("sample.txt", "r");
     yyparse();
-    printf("valid input\n");
     fclose(yyin);
 }
 
