@@ -10,9 +10,6 @@ int varCount = 0; // Number of variables currently stored
 int typeCount = 0;
 int varCapacity = 0; // Current capacity of the array
 
-char **arrayNames = NULL;
-int arrayCount = 0;
-int arrayCapacity = 0;
 
 void yyerror();
 
@@ -122,66 +119,6 @@ void freeVariables() {
     varCapacity = 0;
 }
 
-
-//check the array functions once:
-
-void ensureArrayCapacity(int minCapacity) {
-    if (minCapacity > arrayCapacity) {
-        int newCapacity = arrayCapacity == 0 ? 4 : arrayCapacity * 2;
-        if (newCapacity < minCapacity) {
-            newCapacity = minCapacity;
-        }
-        char **newArrayNames = realloc(arrayNames, newCapacity * sizeof(char*));
-        if (!newArrayNames) {
-            perror("Out of memory");
-            exit(EXIT_FAILURE);
-        }
-        arrayNames = newArrayNames;
-        for (int i = arrayCapacity; i < newCapacity; ++i) {
-            arrayNames[i] = NULL;
-        }
-        arrayCapacity = newCapacity;
-    }
-}
-
-
-int addArrayName(const char *name) {
-    ensureArrayCapacity(arrayCount + 1);
-    arrayNames[arrayCount] = strdup(name);
-    if (!arrayNames[arrayCount]) {
-        perror("Out of memory");
-        exit(EXIT_FAILURE);
-    }
-    arrayCount++;
-    return 1;  // Always returns 1 as no check is done for multiple declarations
-}
-
-
-void printArrayNameList() {
-    if (arrayNames == NULL || arrayCount == 0) {
-        printf("No arrays stored.\n");
-        return;
-    }
-    printf("Current Arrays List:\n");
-    for (int i = 0; i < arrayCount; ++i) {
-        if (arrayNames[i] != NULL) {
-            printf("Array %d: %s\n", i + 1, arrayNames[i]);
-        } else {
-            printf("Array %d: [Unassigned]\n", i + 1);
-        }
-    }
-}
-
-
-void freeArrayNames() {
-    for (int i = 0; i < arrayCount; ++i) {
-        free(arrayNames[i]);
-    }
-    free(arrayNames);
-    arrayNames = NULL;
-    arrayCount = 0;
-    arrayCapacity = 0;
-}
 
 void arrayReplacement(int left, int right) {
     int i = varCount - 1;
