@@ -108,23 +108,26 @@ decl: vars COLON type SEMICOLON | vars COLON ARRAY LBRACKET INTLITERAL PERIOD PE
 vars: vars COMMA IDENTIFIER | IDENTIFIER
 type: INTEGER | BOOLEAN | REAL | CHAR
 assignment: IDENTIFIER ASGOP expression SEMICOLON 
-{
-    if (if_count == -1)
     {
-        char * a = pop();
-        addQuadruple(a, NULL, NULL,$<string>1);
-        display_Quad();
-        push(a);
+        if (if_count == -1)
+        {
+            char * a = pop();
+            addQuadruple(a, NULL, NULL,$<string>1);
+            display_Quad();
+            // push(a);
+        }
+        else 
+        {
+            char * a = pop();
+            char str[50];
+            sprintf(str,"%s=%s\n",$<string>1,a);
+            push_if(str);
+        }
     }
-    else 
+    |
+    IDENTIFIER LBRACKET indexing RBRACKET ASGOP expression SEMICOLON
     {
-        char * a = pop();
-        char str[50];
-        sprintf(str,"%s=%s\n",$<string>1,a);
-        push_if(str);
     }
-}
-
 expression: arith_expression | bool_exp
 
 arith_expression: arith_expression ADDOP tExpression {
@@ -291,7 +294,7 @@ ifCond: IF conditionals THEN BEG matched END SEMICOLON
         printf("if %s==0 goto L%d\n",condition,label_count);
         char * matched = pop_if();
         printf("%s",matched);
-        printf("L%d:",label_count++);
+        printf("L%d:\n",label_count++);
         if_count--;
     }
     | IF conditionals THEN BEG matched END ELSE BEG 
@@ -301,7 +304,7 @@ ifCond: IF conditionals THEN BEG matched END SEMICOLON
         char * matched = pop_if();
         printf("%s",matched);
         printf("goto L%d\n",label_count+1);
-        printf("L%d:",label_count);
+        printf("L%d:\n",label_count);
         push_label(label_count+1);
         label_count += 2;
         clear_if();
@@ -313,11 +316,84 @@ ifCond: IF conditionals THEN BEG matched END SEMICOLON
         printf("L%d:",pop_label());
         if_count--;
     }
-matched: IF conditionals THEN BEG matched END ELSE BEG matched END SEMICOLON | nonsrcWithIf
-tail: IF conditionals THEN BEG tail END SEMICOLON | nonsrcWithIf
+matched: IF conditionals THEN BEG matched END ELSE BEG 
+    {
+        char * condition = pop();
+        printf("if %s==0 goto L%d\n",condition,label_count);
+        char * matched = pop_if();
+        printf("%s",matched);
+        printf("goto L%d\n",label_count+1);
+        printf("L%d:\n",label_count);
+        push_label(label_count+1);
+        label_count += 2;
+        clear_if();
+    }
+    matched END SEMICOLON  
+    {
+        char * tail = pop_if();
+        printf("%s",tail);
+        printf("L%d:",pop_label());
+        if_count--;
+    }
+    | nonsrcWithIf
+tail: IF conditionals THEN BEG tail END SEMICOLON 
+    {
+        char * condition = pop();
+        printf("if %s==0 goto L%d\n",condition,label_count);
+        char * matched = pop_if();
+        printf("%s",matched);
+        printf("L%d:\n",label_count++);
+        if_count--;
+    }
+    | nonsrcWithIf
 
-forLoopWithIf: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG nonEmptySrcWithIf END SEMICOLON
-whileLoopWithIf: WHILE conditionals DO BEG nonEmptySrcWithIf END SEMICOLON
+forLoopWithIf: FOR IDENTIFIER ASGOP arith_expression range arith_expression {
+    if (if_count == -1)
+    {
+        char * a = pop();
+        char * b = pop();
+        addQuadruple(b, NULL, NULL,$<string>2);
+        display_Quad();
+        
+        if (strcmp($<string>5,"to")==0)
+        {
+            
+            printf("L%d: ",label_count);
+            printf("if %s<=%s goto L%d\n",$<string>2,a,label_count+1);
+            push_label(label_count+1);
+            label_count += 2;
+        }
+        else 
+        {
+            printf("L%d: ",label_count);
+            printf("if %s>=%s goto L%d\n",$<string>2,a,label_count+1);
+            push_label(label_count+1);
+            label_count += 2;
+        }
+    }
+    else // To be completed
+    {
+        char * a = pop();
+        char str[50];
+        sprintf(str,"%s=%s\n",$<string>2,a);
+        push_if(str);
+    }
+    }DO BEG nonEmptySrcWithIf END SEMICOLON {
+        printf("goto L%d\n",pop_label());
+    }
+    
+whileLoopWithIf: WHILE conditionals {
+        char * condition = pop();
+        printf("L%d:",label_count);
+        printf("if %s==0 goto L%d\n",condition,label_count+1);
+        push_label(label_count);
+        label_count++;
+    }
+    DO BEG nonEmptySrcWithIf END SEMICOLON
+    {
+        printf("goto L%d\n",pop_label());
+    }
+
 
 conditionals: bool_exp
 

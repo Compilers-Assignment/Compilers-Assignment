@@ -44,13 +44,22 @@ number [0-9]
     if(strcmp(yytext, "real") == 0) return REAL;
     if(strcmp(yytext, "boolean") == 0) return BOOLEAN;
     if(strcmp(yytext, "char") == 0) return CHAR;
-    if(strcmp(yytext, "to") == 0) return TO;
-    if(strcmp(yytext, "downto") == 0) return DOWNTO;
+    if(strcmp(yytext, "to") == 0) {
+        yylval.string = strdup(yytext);
+        return TO;
+    }
+    if(strcmp(yytext, "downto") == 0) {
+        yylval.string = strdup(yytext);
+        return DOWNTO;
+    }
     if(strcmp(yytext, "if") == 0) return IF;
     if(strcmp(yytext, "else") == 0) return ELSE;
     if(strcmp(yytext, "var") == 0) return VAR;
     if(strcmp(yytext, "while") == 0) return WHILE;
-    if(strcmp(yytext, "for") == 0) return FOR;
+    if(strcmp(yytext, "for") == 0) {
+        yylval.string = strdup(yytext);
+        return FOR;
+    }
     if(strcmp(yytext, "do") == 0) return DO;
     if(strcmp(yytext, "array") == 0) return ARRAY;
     if(strcmp(yytext, "begin") == 0) return BEG;
