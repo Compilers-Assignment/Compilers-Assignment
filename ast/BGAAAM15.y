@@ -901,12 +901,26 @@ conditionals: bool_exp {
     treeNode *node = createNode("conditionals", NULL);
     
     addChild(node, boolExpNode);
-    
+
     push(parseStack, node);
 }
 
 
 %%
+
+void printTree(treeNode *root){
+    printf("[");
+    if(root->nonTerminal != NULL){
+        printf("%s", root->nonTerminal);
+    }
+    if(root->terminal != NULL){
+        printf(":{%s}", root->terminal);
+    }
+    for (linkedList *temp = root->children; temp != NULL; temp = temp->next){
+        printTree(temp->node);
+    }
+    printf("]");
+}
 
 void main(){
     freopen("log.txt", "w", stdout);
@@ -914,6 +928,7 @@ void main(){
     yyin = fopen("sample.txt", "r");
     yyparse();
     printf("valid input\n");
+    printTree(parseStack->top->node);
     fclose(yyin);
 }
 
