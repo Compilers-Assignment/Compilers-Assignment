@@ -3,4 +3,6 @@ lex.yy.c
 y.tab.c
 y.tab.h
 run.sh
-run.sh
+.env
+*.txt
+*.py
