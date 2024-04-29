@@ -359,14 +359,14 @@ forLoopWithIf: FOR IDENTIFIER ASGOP arith_expression range arith_expression {
         {
             
             printf("L%d: ",label_count);
-            printf("if %s<=%s goto L%d\n",$<string>2,a,label_count+1);
-            push_label(label_count+1);
+            printf("if %s>%s goto L%d\n",$<string>2,a,label_count+1);
+            push_label(label_count);
             label_count += 2;
         }
         else 
         {
             printf("L%d: ",label_count);
-            printf("if %s>=%s goto L%d\n",$<string>2,a,label_count+1);
+            printf("if %s<%s goto L%d\n",$<string>2,a,label_count+1);
             push_label(label_count+1);
             label_count += 2;
         }
@@ -379,7 +379,9 @@ forLoopWithIf: FOR IDENTIFIER ASGOP arith_expression range arith_expression {
         push_if(str);
     }
     }DO BEG nonEmptySrcWithIf END SEMICOLON {
-        printf("goto L%d\n",pop_label());
+        int label = pop_label();
+        printf("goto L%d\n",label);
+        printf("L%d:",label+1);
     }
     
 whileLoopWithIf: WHILE conditionals {
@@ -391,7 +393,9 @@ whileLoopWithIf: WHILE conditionals {
     }
     DO BEG nonEmptySrcWithIf END SEMICOLON
     {
-        printf("goto L%d\n",pop_label());
+        int label = pop_label();
+        printf("goto L%d\n",label);
+        printf("L%d:",label+1);
     }
 
 
