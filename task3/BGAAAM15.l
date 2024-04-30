@@ -16,6 +16,7 @@
 %}
 
 %option caseless
+%option yylineno
 
 letter [A-Za-z]
 number [0-9]
@@ -23,7 +24,7 @@ number [0-9]
 %%
 
 \/\/.* {}
-\n {linecount++;}
+\n {linecount++; yylineno = linecount;}
 \".*\" {return STRING;}
 \'[0-9a-zA-Z]\' {
     // printf("%d %s character literal\n", linecount, yytext); 

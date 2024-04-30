@@ -2,16 +2,23 @@ program forif;
 var
   i, j: Integer;
   k, d: boolean;
-  f, t: array[1..10] of Integer;
+  f, t, e: array[1..2] of Integer;
+  p: array[2..3] of boolean;
  
 begin
   for i := 1 to 20 do
    begin
      if i % 3 = 0 then 
       begin
-        p := i + 2; 
+        j := i+'a'; 
         write(j);
       end;
     end;
+    
+   while i > 0 do
+   begin
+     j := i;
+   end;
+    
 
 end.
