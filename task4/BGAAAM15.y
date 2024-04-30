@@ -13,6 +13,8 @@
     int temp_char = 0;
     int if_count = -1;
     int label_stack_count = -1;
+    int variable_count = 0;
+    int no_of_variables = 0;
     int label_stack[100];
     void push_label(int label)
     {
@@ -30,6 +32,38 @@
         char result[10];
     } quad[25];
     char if_stack[100][100];
+    struct variable
+    {
+        char name[10];
+        char type[10];
+        int size;
+    } variable_array[25];
+    void addVariable(char name[], char type[], int size)
+    {
+        strcpy(variable_array[variable_count].name, name);
+        strcpy(variable_array[variable_count].type, type);
+        variable_array[variable_count].size = size;
+        variable_count++;    
+    }
+    void updateTypes(char type[], int size, int no_of_variables)
+    {
+        for (int i = variable_count - no_of_variables; i < variable_count; i++)
+        {
+            strcpy(variable_array[i].type,type);
+            variable_array[i].size = size;
+        }
+    }
+    int findSize(char name[])
+    {
+        for (int i = 0; i < variable_count; i++)
+        {
+            if (strcmp(variable_array[i].name,name)==0)
+            {
+                return variable_array[i].size;
+            }
+        }
+        return -1;
+    }
     struct stack
     {
         char c[10];
@@ -104,8 +138,26 @@ start: PROGRAM IDENTIFIER SEMICOLON body
 body: VAR declList BEG nonEmptySrcWithIf END PERIOD 
 declList: 
         | decl declList
-decl: vars COLON type SEMICOLON | vars COLON ARRAY LBRACKET INTLITERAL PERIOD PERIOD INTLITERAL RBRACKET OF type SEMICOLON
-vars: vars COMMA IDENTIFIER | IDENTIFIER
+decl: vars COLON type SEMICOLON {no_of_variables=0;}| vars COLON ARRAY LBRACKET INTLITERAL PERIOD PERIOD INTLITERAL RBRACKET OF type SEMICOLON
+    {
+        char * type = $<string>11;
+        printf("Type is %s\n",type);
+        if (strcmp(type,"integer")==0)
+        {
+            updateTypes("integer",4,no_of_variables);
+        }
+        no_of_variables = 0;
+    }
+vars: vars COMMA IDENTIFIER 
+    {
+        addVariable($<string>3,"",0);
+        no_of_variables++;
+    }
+    | IDENTIFIER
+    {
+        addVariable($<string>1,"",0);
+        no_of_variables++;
+    }
 type: INTEGER | BOOLEAN | REAL | CHAR
 assignment: IDENTIFIER ASGOP expression SEMICOLON 
     {
@@ -127,6 +179,13 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
     |
     IDENTIFIER LBRACKET indexing RBRACKET ASGOP expression SEMICOLON
     {
+        char * variable = $<string>1;
+        char * expression = pop();
+        char * index = pop();
+        int size = findSize(variable);
+        printf("t%d=%s*%d\n",temp_char++,index,size);
+        printf("t%d=&%s+t%d\n",temp_char,variable,temp_char-1);
+        printf("*t%d=%s\n",temp_char,expression);
     }
 expression: arith_expression | bool_exp
 

@@ -40,9 +40,18 @@ number [0-9]
     // printf("%d %s keyword\n", linecount, yytext); 
     convertToLower(yytext);
     if(strcmp(yytext, "program") == 0) return PROGRAM;
-    if(strcmp(yytext, "integer") == 0) return INTEGER;
-    if(strcmp(yytext, "real") == 0) return REAL;
-    if(strcmp(yytext, "boolean") == 0) return BOOLEAN;
+    if(strcmp(yytext, "integer") == 0) {
+        yylval.string = strdup(yytext);
+        return INTEGER;
+    }
+    if(strcmp(yytext, "real") == 0) {
+        yylval.string = strdup(yytext);
+        return REAL;
+    }
+    if(strcmp(yytext, "boolean") == 0) {
+        yylval.string = strdup(yytext);
+        return BOOLEAN;
+    }
     if(strcmp(yytext, "char") == 0) return CHAR;
     if(strcmp(yytext, "to") == 0) {
         yylval.string = strdup(yytext);
