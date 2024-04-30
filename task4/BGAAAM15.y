@@ -135,7 +135,7 @@
 %%
 
 start: PROGRAM IDENTIFIER SEMICOLON body 
-body: VAR declList BEG nonEmptySrcWithIf END PERIOD 
+body: VAR declList BEG srcWithIf END PERIOD 
 declList: 
         | decl declList
 decl: vars COLON type SEMICOLON {
@@ -214,18 +214,6 @@ arith_expression: arith_expression ADDOP tExpression {
     }
 }  
     | tExpression
-    | IDENTIFIER LBRACKET arith_expression RBRACKET
-    {
-        char * index = pop();
-        char * variable = $<string>1;
-        int size = findSize(variable);
-        printf("t%d=%s*%d\n",temp_char++,index,size);
-        printf("t%d=&%s+t%d\n",temp_char,variable,temp_char-1);
-        char str[5];
-        sprintf(str,"*t%d",temp_char);
-        temp_char++;
-        push(str);
-    }
 
 tExpression: tExpression MULOP fExpression {
     char str[5];
@@ -322,8 +310,7 @@ cond: arith_expression RELOP arith_expression
         push(str);
     }
 
-nonEmptySrcWithIf: 
-    | ruleWithIf srcWithIf 
+
 srcWithIf: 
     | ruleWithIf srcWithIf
 ruleWithIf: WRITE LPAREN printable RPAREN SEMICOLON
@@ -332,17 +319,17 @@ ruleWithIf: WRITE LPAREN printable RPAREN SEMICOLON
     | forLoopWithIf
     | whileLoopWithIf
     | assignment
-    | BEG nonEmptySrcWithIf END
+    | BEG srcWithIf END
 
-nonsrcWithIf: 
-    | nonIf nonsrcWithIf
+srcWithoutIf: 
+    | ruleWithoutIf srcWithoutIf
 
-nonIf: WRITE LPAREN printable RPAREN SEMICOLON
+ruleWithoutIf: WRITE LPAREN printable RPAREN SEMICOLON
     | READ LPAREN readable RPAREN SEMICOLON
     | forLoopWithIf
     | whileLoopWithIf
     | assignment
-    | BEG nonEmptySrcWithIf END
+    | BEG srcWithIf END
 
 readable: IDENTIFIER 
     {
@@ -350,14 +337,8 @@ readable: IDENTIFIER
     }
     | IDENTIFIER LBRACKET indexing RBRACKET 
 
-indexing: IDENTIFIER 
-    {
-        push($<string>1);
-    }
-    | INTLITERAL
-    {
-        push($<string>1);
-    }
+indexing: arith_expression
+
 /* ifCond: matched | unmatched
 matched: IF cond THEN BEG matched END ELSE BEG matched END SEMICOLON | nonEmptySrcWithoutIf
 unmatched: IF cond THEN BEG ifCond END SEMICOLON
@@ -409,7 +390,7 @@ matched: IF conditionals THEN BEG matched END ELSE BEG
         printf("L%d:",pop_label());
         if_count--;
     }
-    | nonsrcWithIf
+    | srcWithoutIf
 tail: IF conditionals THEN BEG tail END SEMICOLON 
     {
         char * condition = pop();
@@ -419,7 +400,7 @@ tail: IF conditionals THEN BEG tail END SEMICOLON
         printf("L%d:\n",label_count++);
         if_count--;
     }
-    | nonsrcWithIf
+    | srcWithoutIf
 
 forLoopWithIf: FOR IDENTIFIER ASGOP arith_expression range arith_expression {
     if (if_count == -1)
@@ -452,7 +433,7 @@ forLoopWithIf: FOR IDENTIFIER ASGOP arith_expression range arith_expression {
         sprintf(str,"%s=%s\n",$<string>2,a);
         push_if(str);
     }
-    }DO BEG nonEmptySrcWithIf END SEMICOLON {
+    }DO BEG srcWithIf END SEMICOLON {
         int label = pop_label();
         printf("goto L%d\n",label);
         printf("L%d:",label+1);
@@ -465,7 +446,7 @@ whileLoopWithIf: WHILE conditionals {
         push_label(label_count);
         label_count++;
     }
-    DO BEG nonEmptySrcWithIf END SEMICOLON
+    DO BEG srcWithIf END SEMICOLON
     {
         int label = pop_label();
         printf("goto L%d\n",label);
@@ -474,18 +455,6 @@ whileLoopWithIf: WHILE conditionals {
 
 
 conditionals: bool_exp
-
-/* nonEmptySrcWithoutIf: ruleWithoutIf srcWithoutIf 
-srcWithoutIf: 
-    | ruleWithoutIf srcWithoutIf
-ruleWithoutIf: WRITE LPAREN printable RPAREN SEMICOLON
-    | READ LPAREN readable RPAREN SEMICOLON
-    | forLoopWithoutIf
-    | whileLoopWithoutIf
-    | assignment
-
-forLoopWithoutIf: FOR IDENTIFIER ASGOP expression range expression DO BEG nonEmptySrcWithoutIf END SEMICOLON
-whileLoopWithoutIf: WHILE LPAREN cond RPAREN DO BEG nonEmptySrcWithoutIf END SEMICOLON */
 
 
 %%
