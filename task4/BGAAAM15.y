@@ -182,18 +182,32 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
     |
     IDENTIFIER LBRACKET indexing RBRACKET ASGOP expression SEMICOLON
     {
-        char * variable = $<string>1;
-        char * expression = pop();
-        char * index = pop();
-        int size = findSize(variable);
-        printf("t%d=%s*%d\n",temp_char++,index,size);
-        printf("t%d=&%s+t%d\n",temp_char,variable,temp_char-1);
-        printf("*t%d=%s\n",temp_char,expression);
+        if (if_count == -1)
+        {
+            char * variable = $<string>1;
+            char * expression = pop();
+            char * index = pop();
+            int size = findSize(variable);
+            printf("t%d=%s*%d\n",temp_char++,index,size);
+            printf("t%d=&%s+t%d\n",temp_char,variable,temp_char-1);
+            printf("*t%d=%s\n",temp_char,expression);
+        }
+        else
+        {
+            char * variable = $<string>1;
+            char * expression = pop();
+            char * index = pop();
+            int size = findSize(variable);
+            char str[100];
+            sprintf(str,"t%d=%s*%d\nt%d=&%s+t%d\nt%d=%s\n",temp_char++,index,size,temp_char,variable,temp_char-1,temp_char,expression);
+            push_if(str);
+
+        }
     }
 expression: arith_expression | bool_exp
 
 arith_expression: arith_expression ADDOP tExpression {
-    printf("arith_expression\n");
+    // printf("arith_expression\n");
     char str[20];
     char * a = pop();
     char * b = pop();
@@ -306,15 +320,22 @@ cond: arith_expression RELOP arith_expression
         char * a = pop();
         char * b = pop();
         addQuadruple(b,$<string>2,a,str);
+        // printf("a --> %s\n", a);
+        // printf("b --> %s\n", b);
+        // printf("str --> %s\n", str);
         display_Quad();
+        // a = pop();
+        // printf("a --> %s\n", a);
         push(str);
+        // a = pop();
+        // printf("a --> %s\n", a);
     }
 
 
 srcWithIf: 
     | ruleWithIf srcWithIf
-ruleWithIf: WRITE LPAREN printable RPAREN SEMICOLON
-    | READ LPAREN readable RPAREN SEMICOLON
+ruleWithIf: WRITE LPAREN printable RPAREN SEMICOLON {pop();}
+    | READ LPAREN readable RPAREN SEMICOLON {pop();}
     | {if_count++;}ifCond
     | forLoopWithIf
     | whileLoopWithIf
@@ -324,8 +345,8 @@ ruleWithIf: WRITE LPAREN printable RPAREN SEMICOLON
 srcWithoutIf: 
     | ruleWithoutIf srcWithoutIf
 
-ruleWithoutIf: WRITE LPAREN printable RPAREN SEMICOLON
-    | READ LPAREN readable RPAREN SEMICOLON
+ruleWithoutIf: WRITE LPAREN printable RPAREN SEMICOLON {pop();}
+    | READ LPAREN readable RPAREN SEMICOLON {pop();}
     | forLoopWithIf
     | whileLoopWithIf
     | assignment
@@ -336,6 +357,33 @@ readable: IDENTIFIER
         push($<string>1);
     }
     | IDENTIFIER LBRACKET indexing RBRACKET 
+    {
+        if (if_count==-1)
+        {
+            char * index = pop();
+            char * variable = $<string>1;
+            int size = findSize(variable);
+            printf("t%d=%s*%d\n",temp_char++,index,size);
+            printf("t%d=&%s+t%d\n",temp_char,variable,temp_char-1);
+            char str[5];
+            sprintf(str,"*t%d",temp_char);
+            temp_char++;
+            push(str);
+        }
+        else
+        {
+            char * index = pop();
+            char * variable = $<string>1;
+            int size = findSize(variable);
+            char str_2[50];
+            sprintf(str_2,"t%d=%s*%d\nt%d=&%s+t%d\n",temp_char++,index,size,temp_char,variable,temp_char-1);
+            push_if(str_2);     
+            char str[5];
+            sprintf(str,"*t%d",temp_char);
+            temp_char++;
+            push(str);
+        }
+    }
 
 indexing: arith_expression
 
