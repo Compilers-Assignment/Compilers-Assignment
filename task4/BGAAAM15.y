@@ -182,18 +182,32 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
     |
     IDENTIFIER LBRACKET indexing RBRACKET ASGOP expression SEMICOLON
     {
-        char * variable = $<string>1;
-        char * expression = pop();
-        char * index = pop();
-        int size = findSize(variable);
-        printf("t%d=%s*%d\n",temp_char++,index,size);
-        printf("t%d=&%s+t%d\n",temp_char,variable,temp_char-1);
-        printf("*t%d=%s\n",temp_char,expression);
+        if (if_count == -1)
+        {
+            char * variable = $<string>1;
+            char * expression = pop();
+            char * index = pop();
+            int size = findSize(variable);
+            printf("t%d=%s*%d\n",temp_char++,index,size);
+            printf("t%d=&%s+t%d\n",temp_char,variable,temp_char-1);
+            printf("*t%d=%s\n",temp_char,expression);
+        }
+        else
+        {
+            char * variable = $<string>1;
+            char * expression = pop();
+            char * index = pop();
+            int size = findSize(variable);
+            char str[100];
+            sprintf(str,"t%d=%s*%d\nt%d=&%s+t%d\nt%d=%s\n",temp_char++,index,size,temp_char,variable,temp_char-1,temp_char,expression);
+            push_if(str);
+
+        }
     }
 expression: arith_expression | bool_exp
 
 arith_expression: arith_expression ADDOP tExpression {
-    printf("arith_expression\n");
+    // printf("arith_expression\n");
     char str[20];
     char * a = pop();
     char * b = pop();
@@ -344,15 +358,31 @@ readable: IDENTIFIER
     }
     | IDENTIFIER LBRACKET indexing RBRACKET 
     {
-        char * index = pop();
-        char * variable = $<string>1;
-        int size = findSize(variable);
-        printf("t%d=%s*%d\n",temp_char++,index,size);
-        printf("t%d=&%s+t%d\n",temp_char,variable,temp_char-1);
-        char str[5];
-        sprintf(str,"*t%d",temp_char);
-        temp_char++;
-        push(str);
+        if (if_count==-1)
+        {
+            char * index = pop();
+            char * variable = $<string>1;
+            int size = findSize(variable);
+            printf("t%d=%s*%d\n",temp_char++,index,size);
+            printf("t%d=&%s+t%d\n",temp_char,variable,temp_char-1);
+            char str[5];
+            sprintf(str,"*t%d",temp_char);
+            temp_char++;
+            push(str);
+        }
+        else
+        {
+            char * index = pop();
+            char * variable = $<string>1;
+            int size = findSize(variable);
+            char str_2[50];
+            sprintf(str_2,"t%d=%s*%d\nt%d=&%s+t%d\n",temp_char++,index,size,temp_char,variable,temp_char-1);
+            push_if(str_2);     
+            char str[5];
+            sprintf(str,"*t%d",temp_char);
+            temp_char++;
+            push(str);
+        }
     }
 
 indexing: arith_expression

@@ -1,21 +1,17 @@
 program ArrayAverage;
 var
   grade : char ;
-  isready : boolean ;
-  a,g : array [1..10] of Integer ;
-  number, i, sum : Integer;
-  maxValue : real;
+  b,c,d,a,g : array [1..10] of Integer ;
   // the programs starts here
 begin
   d := 3+5*l;
   if( a[i]>5) then
   begin
-    b:=1*2+3-g[4*3+2];
-    write(e);
+    a[3*2+1231]:=1000+b[c*d];
   end
   else
   begin
-    c:=2*4/8;
-    read(f);
+    a:=100;
+    c:=10000;
   end;
 end.
