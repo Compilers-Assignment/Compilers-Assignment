@@ -138,7 +138,10 @@ start: PROGRAM IDENTIFIER SEMICOLON body
 body: VAR declList BEG nonEmptySrcWithIf END PERIOD 
 declList: 
         | decl declList
-decl: vars COLON type SEMICOLON {no_of_variables=0;}| vars COLON ARRAY LBRACKET INTLITERAL PERIOD PERIOD INTLITERAL RBRACKET OF type SEMICOLON
+decl: vars COLON type SEMICOLON {
+        no_of_variables=0;
+    }
+    | vars COLON ARRAY LBRACKET INTLITERAL PERIOD PERIOD INTLITERAL RBRACKET OF type SEMICOLON
     {
         char * type = $<string>11;
         printf("Type is %s\n",type);
@@ -211,6 +214,18 @@ arith_expression: arith_expression ADDOP tExpression {
     }
 }  
     | tExpression
+    | IDENTIFIER LBRACKET arith_expression RBRACKET
+    {
+        char * index = pop();
+        char * variable = $<string>1;
+        int size = findSize(variable);
+        printf("t%d=%s*%d\n",temp_char++,index,size);
+        printf("t%d=&%s+t%d\n",temp_char,variable,temp_char-1);
+        char str[5];
+        sprintf(str,"*t%d",temp_char);
+        temp_char++;
+        push(str);
+    }
 
 tExpression: tExpression MULOP fExpression {
     char str[5];
