@@ -28,6 +28,7 @@ number [0-9]
 \".*\" {return STRING;}
 \'[0-9a-zA-Z]\' {
     // printf("%d %s character literal\n", linecount, yytext); 
+yylval.integer = atoi(yytext);
 return CHAR_LIT;}
 
 (program|integer|real|boolean|char|to|downto|if|else|var|while|for|do|array|begin|end|read|write|then|array|of|writeln) { 

@@ -24,15 +24,19 @@
         }
         char **newVarNames = realloc(varNames, newCapacity * sizeof(char*));
         char **newVarTypes = realloc(varTypes, newCapacity * sizeof(char*));
+        char **newVarValues = realloc(varValues, newCapacity * sizeof(char*));
         if (!newVarNames) {
             perror("Out of memory");
             exit(EXIT_FAILURE);
         }
         varNames = newVarNames;
         varTypes = newVarTypes;
+        varValues = newVarValues;
+        char safe[] = "NULL";
         for (int i = varCapacity; i < newCapacity; ++i) {
             varNames[i] = NULL; // Initialize new elements to NULL
             varTypes[i] = NULL;
+            varValues[i] = strdup(safe); //change this logic
         }
         varCapacity = newCapacity;
     }
@@ -105,7 +109,7 @@
 	    printf("Current Variables List:\n");
 	    for (int i = 0; i < varCount; ++i) {
 		if (varNames[i] != NULL) {
-		    printf("Variable & Type %d: %s %s\n", i + 1, varNames[i], varTypes[i]);
+		    printf("Variable & Type %d: %s %s %s\n", i + 1, varNames[i], varTypes[i], varValues[i]);
 	    
 		} else {
 		    printf("Variable %d: [Unassigned]\n", i + 1);
@@ -175,7 +179,7 @@ declList:
         | decl declList
 decl: vars COLON type SEMICOLON 
     | vars COLON ARRAY LBRACKET INTLITERAL PERIOD PERIOD INTLITERAL RBRACKET OF arraytype SEMICOLON 
-    {/*printVariableList();*/ int left = $<integer>5; int right = $<integer>8; /*printf("%d %d", left, right); */ arrayReplacement(left, right); /*printVariableList();*/}
+    {int left = $<integer>5; int right = $<integer>8; arrayReplacement(left, right); printVariableList();}
 
 vars: vars COMMA IDENTIFIER {if(addVariable($<string>3) == 0){yyerror(1);}}
     | IDENTIFIER            {if(addVariable($<string>1) == 0){yyerror(1);}}
@@ -224,23 +228,30 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 		printf("Type mismatch. Attempted to assign %s to %s\n", type2, type1);
 		yyerror(1);
 	    }
+	    //type checking done, putting value
+	    
+
+	    varValues[j] = strdup($<string>3);
+	    
+	    
+
 }
 
     | IDENTIFIER LBRACKET indexing RBRACKET ASGOP expression SEMICOLON //ARRAYS, LATER
 
-expression: arith_expression {$<type>$ = $<type>1;}| bool_exp {$<type>$ = $<type>1;}
+expression: arith_expression { /*sprintf($<string>$, "%d", $<integer>1);*/printf("the int is %d %d\n", $<integer>1, yylineno); $<type>$ = $<type>1; }| bool_exp { sprintf($<string>$, "%d", $<integer>1); $<type>$ = $<type>1; }
 
-arith_expression: arith_expression ADDOP tExpression {if($<type>$ != $<type>3) {printf("Type Mismatch"); yyerror(1);}$<type>$ = $<type>3;} 
-    | tExpression {$<type>$ = $<type>1;}
+arith_expression: arith_expression ADDOP tExpression {if($<type>$ != $<type>3) {printf("Type Mismatch"); yyerror(1);}$<integer>$ = $<integer>1 + $<integer>3; $<type>$ = $<type>3;} 
+    | tExpression {$<integer>$ = $<integer>1; $<type>$ = $<type>1;}
 
-tExpression: tExpression MULOP fExpression {if($<type>$ != $<type>3) {printf("Type Mismatch"); yyerror(1);} 
+tExpression: tExpression MULOP fExpression {if($<type>$ != $<type>3) {printf("Type Mismatch"); yyerror(1);} $<integer>$ = $<integer>1 * $<integer>3;
 $<type>$ = $<type>3;} 
-    | fExpression {$<type>$ = $<type>1;}
+    | fExpression {$<integer>$ = $<integer>1; $<type>$ = $<type>1;}
     
-fExpression: LPAREN arith_expression RPAREN {$<type>$ = $<type>2;}
-    | readable {$<type>$ = $<type>1;}
-    | INTLITERAL {$<type>$ = 'i';}
-    | CHAR_LIT {$<type>$ = 'c';}
+fExpression: LPAREN arith_expression RPAREN {$<integer>$ = $<integer>2; $<type>$ = $<type>2;}
+    | readable {$<integer>$ = $<integer>1; $<type>$ = $<type>1;}
+    | INTLITERAL {$<integer>$ = $<integer>1; $<type>$ = 'i'; } //was an error until i put assingment before type
+    | CHAR_LIT {$<integer>$ = $<integer>1; $<type>$ = 'c';}
 
 
 bool_exp: term {$<type>$ = $<type>1;}
