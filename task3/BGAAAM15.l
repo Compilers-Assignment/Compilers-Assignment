@@ -73,6 +73,7 @@ return CHAR_LIT;}
     // printf("%d %s integer literal\n", linecount, yytext); 
     yylval.integer = atoi(yytext);
     yylval.test.value = atoi(yytext);
+    yylval.test.val = strdup(yytext);
     return INTLITERAL;
 }
 
