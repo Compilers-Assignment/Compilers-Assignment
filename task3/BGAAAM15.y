@@ -24,25 +24,38 @@
         }
         char **newVarNames = realloc(varNames, newCapacity * sizeof(char*));
         char **newVarTypes = realloc(varTypes, newCapacity * sizeof(char*));
+        char **newVarValues = realloc(varValues, newCapacity * sizeof(char *));
         if (!newVarNames) {
             perror("Out of memory");
             exit(EXIT_FAILURE);
         }
         varNames = newVarNames;
         varTypes = newVarTypes;
+        varValues = newVarValues;
+        char safe[] = "NULL";
         for (int i = varCapacity; i < newCapacity; ++i) {
             varNames[i] = NULL; // Initialize new elements to NULL
             varTypes[i] = NULL;
+            varValues[i] = strdup(safe);
         }
         varCapacity = newCapacity;
     }
 }
+        int bracketCheck(const char *name){
+          for(int i = 0; i < strlen(name); i++){
+          	if(name[i] == '['){
+          		return 1;
+                 }
+          }
+          return 0;
+        }
 
 	int addVariable(const char *name) {
 
 	    for(int i = 0; i < varCount; i++){
-	    	if(strcmp(varNames[i], name) == 0){
-		   printf("Multiple declarations of variable: %s", name);
+	    	if(strcmp(varNames[i], name) == 0 && !(bracketCheck(varNames[i]))){
+		   printf("Multiple declarations of variable: %s. ", name);
+		   yyerror(1);
 		   //perror("");
 		   return 0;
 		}
@@ -80,7 +93,7 @@
 	int checkVar(const char *name) { //this is for the undeclared variable error
 	   //printf("checkvar called for %s\n", name);
 	   bool flag = false;
-	   int j = 0;
+	   int j = -1;
 	   for(int i = 0; i < varCount; i++){
 	    	if(strcmp(varNames[i], name) == 0){
 		   flag = true;
@@ -90,8 +103,9 @@
 	   }
 	   
 	   if(!flag){
-	       printf("undeclared variable: %s", name);
+	       printf("undeclared variable: %s. ", name);
 	       yyerror(1);
+	       
 	   }
 	   return j;
 	}
@@ -179,8 +193,8 @@ decl: vars COLON type SEMICOLON
     | vars COLON ARRAY LBRACKET INTLITERAL PERIOD PERIOD INTLITERAL RBRACKET OF arraytype SEMICOLON 
     {/*printVariableList();*/ int left = $<integer>5; int right = $<integer>8; /*printf("%d %d", left, right); */ arrayReplacement(left, right); /*printVariableList();*/}
 
-vars: vars COMMA IDENTIFIER {if(addVariable($<test.name>3) == 0){yyerror(1);}}
-    | IDENTIFIER            {if(addVariable($<test.name>1) == 0){yyerror(1);}}
+vars: vars COMMA IDENTIFIER {if(addVariable($<test.name>3) == 0){}}
+    | IDENTIFIER            {if(addVariable($<test.name>1) == 0){}}
 
 type: INTEGER {addVarType("int");}
      | BOOLEAN {addVarType("bool");}
@@ -196,6 +210,7 @@ arraytype:   INTEGER {addVarType("aint");}
 assignment: IDENTIFIER ASGOP expression SEMICOLON 
 {
 	    int j = checkVar($<test.name>1); 
+	    if(j!=-1){
 	    char *type1 = varTypes[j];
 	 
 	    char *type2;
@@ -215,41 +230,102 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 		default:
 		    type2 = "unknown";
 		    printf("Error: Unknown type '%c'\n", $<type>3);
-		    yyerror(1);
+		    
 		    break;
 	    }
 
-	    printf("Type of the variable is %s\n", type1);
-	    printf("Type of the RHS is %s\n", type2);
+	    //printf("Type of the variable is %s\n", type1);
+	    //printf("Type of the RHS is %s\n", type2);
 	    
 	    if (strcmp(type1, type2) != 0) {
-		printf("Type mismatch. Attempted to assign %s to %s\n", type2, type1);
+		printf("Type mismatch. Attempted to assign %s to %s. ", type2, type1);
 		yyerror(1);
 	    }
+	    
+	    sprintf(varValues[j], "%d", $<test.value>3);}
 }
 
-    | IDENTIFIER LBRACKET indexing RBRACKET ASGOP expression SEMICOLON //ARRAYS, LATER
-
-expression: arith_expression {$<type>$ = $<type>1;}| bool_exp {$<type>$ = $<type>1;}
-
-arith_expression: arith_expression ADDOP tExpression {if($<type>$ != $<type>3) {printf("Type Mismatch"); yyerror(1);}$<type>$ = $<type>3;} 
-    | tExpression {$<type>$ = $<type>1;}
-
-tExpression: tExpression MULOP fExpression {if($<type>$ != $<type>3) {printf("Type Mismatch"); yyerror(1);} 
-$<type>$ = $<type>3;} 
-    | fExpression {$<type>$ = $<type>1;}
+    | IDENTIFIER LBRACKET indexing RBRACKET ASGOP expression SEMICOLON //INDEXING NOT DONE
     
-fExpression: LPAREN arith_expression RPAREN {$<type>$ = $<type>2;}
-    | readable {$<type>$ = $<type>1;}
-    | INTLITERAL {$<type>$ = 'i';}
+    {
+	    //int j = checkVar($<test.name>1); 
+	    //char *type1 = varTypes[j]; 
+	    //memmove(type1, type1 + 1, strlen(type1));
+	    //printf("aa");
+	    //char *str;
+	    //printf("xx");
+	    //sprintf(str,"%d",$<test.value>3);
+	    //printf("ss"); 
+
+	    
+	      char *str = strcat($<test.name>1, "[");
+	      //printf("%s", str);
+	      char str2[10];
+	      sprintf(str2, "%d", $<test.value>3);
+	      //printf("%s", str2);
+	      char *str3 = strcat(str2, "]");
+	      char *newStr = strcat(str, str3);
+	      //printf("new str %s", newStr);
+	      //char *newStr = strcat($<test.name>1, strcat("[", strcat("a", "]")));
+	    int j = checkVar(newStr);
+	    if(j!=-1){
+	    char *type1 = varTypes[j];
+	    
+	    //printf("Index value is %d ", $<test.value>3);
+	 
+	    char *type2;
+	    switch ($<type>6) {
+		case 'i':
+		    type2 = "int";
+		    break;
+		case 'c':
+		    type2 = "char";
+		    break;
+		case 'r':
+		    type2 = "real";
+		    break;
+		case 'b':
+		    type2 = "bool";
+		    break;
+		default:
+		    type2 = "unknown";
+		    printf("Error: Unknown type '%c'\n", $<type>3);
+		    
+		    break;
+	    }
+
+	    //printf("Type of the variable is %s\n", type1);
+	    //printf("Type of the RHS is %s\n", type2);
+	    
+	    if (strcmp(type1, type2) != 0) {
+		printf("Type mismatch. Attempted to assign %s to %s. ", type2, type1);
+		yyerror(1);
+	    }
+	    }
+	    
+	    
+}
+
+expression: arith_expression {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}| bool_exp {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
+
+arith_expression: arith_expression ADDOP tExpression {if($<type>$ != $<type>3) {printf("Type Mismatch"); } $<test.value>$ = $<test.value>1 + $<test.value>3; $<type>$ = $<type>3;} 
+    | tExpression {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
+
+tExpression: tExpression MULOP fExpression {if($<type>$ != $<type>3) {printf("Type Mismatch"); } 
+$<test.value>$ = $<test.value>1 * $<test.value>3; $<type>$ = $<type>3;} 
+    | fExpression {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1; }
+    
+fExpression: LPAREN arith_expression RPAREN {$<test.value>$ = $<test.value>2; $<type>$ = $<type>2;}
+    | readable {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
+    | INTLITERAL {$<test.value>$ = $<test.value>1; $<type>$ = 'i';}
     | CHAR_LIT {$<type>$ = 'c';}
 
 
 bool_exp: term {$<type>$ = $<type>1;}
-    | bool_exp OR term {if($<type>$ != $<type>3) {printf("Type Mismatch"); yyerror(1);} $<type>$ = $<type>3;} //CHANGE
+    | bool_exp OR term {if($<type>$ != $<type>3) {printf("Type Mismatch"); } $<type>$ = $<type>3;} //CHANGE
     
 term: factor {$<type>$ = $<type>1;}
-    | term AND factor {if($<type>$ != $<type>3) {printf("Type Mismatch"); yyerror(1);} $<type>$ = $<type>3;} //CHANGE
+    | term AND factor {if($<type>$ != $<type>3) {printf("Type Mismatch"); } $<type>$ = $<type>3;} //CHANGE
     
 factor: cond {$<type>$ = $<type>1;}
     | NOT factor {$<type>$ = $<type>2;}
@@ -260,7 +336,7 @@ printable: STRING | printable COMMA readable | printable COMMA STRING | arith_ex
 
 range: TO | DOWNTO
 
-cond: arith_expression RELOP arith_expression {if($<type>$ != $<type>3) {printf("Type Mismatch"); yyerror(1); }
+cond: arith_expression RELOP arith_expression {if($<type>$ != $<type>3) {printf("Type Mismatch");  }
 $<type>$ = $<type>3;}
 
 
@@ -295,10 +371,23 @@ rule: WRITE LPAREN printable RPAREN SEMICOLON
     | assignment
     | BEG srcWithIf END */
 
-readable: IDENTIFIER {int j = checkVar($<test.name>1); $<type>$ = tolower(varTypes[j][0]);} 
-    | IDENTIFIER LBRACKET indexing RBRACKET //this is array bs we take lite for now
+readable: IDENTIFIER { int j = checkVar($<test.name>1); $<test.value>$ = atoi(varValues[j]); $<type>$ = tolower(varTypes[j][0]);} 
+    | IDENTIFIER LBRACKET indexing RBRACKET 
+    {
+    	      char *str = strcat($<test.name>1, "[");
+	      char str2[10];
+	      sprintf(str2, "%d", $<test.value>3);
+	      char *str3 = strcat(str2, "]");
+	      char *newStr = strcat(str, str3);
+	      int j = checkVar(newStr);
+	      
+	      $<test.value>$ = atoi(varValues[j]);
+	      
+	      $<type>$ = tolower(varTypes[j][0]);
+	      printf("type of - %c",$<type>$); 
+    }//this is array bs we take lite for now
 
-indexing: arith_expression
+indexing: arith_expression {$<test.value>$ = $<test.value>1;}
 
 /* ifCond: IF conditionals THEN BEG matched END SEMICOLON
     | IF conditionals THEN BEG matched END ELSE BEG 
@@ -316,7 +405,7 @@ ifCond: IF conditionals THEN BEG src END SEMICOLON
 forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG src END SEMICOLON
 
     {	 
-            if($<type>4 != $<type>6){printf("Type Mismatch."); yyerror(1);} //if the arithops are not of the same type	
+            if($<type>4 != $<type>6){printf("Type Mismatch."); } //if the arithops are not of the same type	
 	    int j = checkVar($<test.name>2); 
 	    char *type1 = varTypes[j];
 	 
@@ -337,7 +426,7 @@ forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG src
 		default:
 		    type2 = "unknown";
 		    printf("Error: Unknown type '%c'\n", $<type>4);
-		    yyerror(1);
+		    
 		    break;
 	    }
 
@@ -345,8 +434,8 @@ forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG src
 	    printf("Type of the RHS is %s\n", type2);
 	    
 	    if (strcmp(type1, type2) != 0) {
-		printf("Type mismatch. Attempted to assign %s to %s\n", type2, type1);
-		yyerror(1);
+		printf("Type mismatch. Attempted to assign %s to %s. ", type2, type1);
+		
 	    }
 	}
     
@@ -372,9 +461,9 @@ void yyerror(int code) {
     }
     else{
 
-    	printf("error line number %d", yylineno);
+    	printf("Line number %d.\n", yylineno);
     }
-    exit(1);
+    //exit(1);
 }
 
 
