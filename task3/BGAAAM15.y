@@ -169,6 +169,16 @@
 		i--;
 	    }
 	}
+	
+const char* type_to_string(char typeCode) {
+    switch (typeCode) {
+        case 'c': return "character";
+        case 'r': return "real";
+        case 'b': return "boolean";
+        case 'i': return "integer";
+        default: return "unknown"; // Handle unexpected types
+    }
+}
 %}
 
 %token PROGRAM INTEGER REAL BOOLEAN CHAR TO DOWNTO IF ELSE VAR WHILE FOR DO ARRAY BEG END READ WRITE THEN AND OR NOT INTLITERAL IDENTIFIER ADDOP MULOP RELOP ASGOP SEMICOLON COLON LBRACKET RBRACKET COMMA LPAREN RPAREN PERIOD STRING OF CHAR_LIT
@@ -308,10 +318,20 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 
 expression: arith_expression {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}| bool_exp {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
 
-arith_expression: arith_expression ADDOP tExpression {if($<type>$ != $<type>3) {printf("Type Mismatch"); } $<test.value>$ = $<test.value>1 + $<test.value>3; $<type>$ = $<type>3;} 
+arith_expression: arith_expression ADDOP tExpression {
+if ($<type>$ != $<type>3) {
+    printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
+           type_to_string($<type>$), type_to_string($<type>3), yylineno);
+}
+ $<test.value>$ = $<test.value>1 + $<test.value>3; $<type>$ = $<type>3;} 
     | tExpression {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
 
-tExpression: tExpression MULOP fExpression {if($<type>$ != $<type>3) {printf("Type Mismatch"); } 
+tExpression: tExpression MULOP fExpression {
+
+if ($<type>$ != $<type>3) {
+    printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
+           type_to_string($<type>$), type_to_string($<type>3), yylineno);
+}
 $<test.value>$ = $<test.value>1 * $<test.value>3; $<type>$ = $<type>3;} 
     | fExpression {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1; }
     
@@ -322,10 +342,18 @@ fExpression: LPAREN arith_expression RPAREN {$<test.value>$ = $<test.value>2; $<
 
 
 bool_exp: term {$<type>$ = $<type>1;}
-    | bool_exp OR term {if($<type>$ != $<type>3) {printf("Type Mismatch"); } $<type>$ = $<type>3;} //CHANGE
+    | bool_exp OR term {
+   if ($<type>$ != $<type>3) {
+    printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
+           type_to_string($<type>$), type_to_string($<type>3), yylineno);
+} $<type>$ = $<type>3;} //CHANGE
     
 term: factor {$<type>$ = $<type>1;}
-    | term AND factor {if($<type>$ != $<type>3) {printf("Type Mismatch"); } $<type>$ = $<type>3;} //CHANGE
+    | term AND factor {
+    if ($<type>$ != $<type>3) {
+    printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
+           type_to_string($<type>$), type_to_string($<type>3), yylineno);
+} $<type>$ = $<type>3;} //CHANGE
     
 factor: cond {$<type>$ = $<type>1;}
     | NOT factor {$<type>$ = $<type>2;}
@@ -336,7 +364,10 @@ printable: STRING | printable COMMA readable | printable COMMA STRING | arith_ex
 
 range: TO | DOWNTO
 
-cond: arith_expression RELOP arith_expression {if($<type>$ != $<type>3) {printf("Type Mismatch");  }
+cond: arith_expression RELOP arith_expression {if ($<type>$ != $<type>3) {
+    printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
+           type_to_string($<type>$), type_to_string($<type>3), yylineno);
+} 
 $<type>$ = $<type>3;}
 
 
@@ -405,7 +436,10 @@ ifCond: IF conditionals THEN BEG src END SEMICOLON
 forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG src END SEMICOLON
 
     {	 
-            if($<type>4 != $<type>6){printf("Type Mismatch."); } //if the arithops are not of the same type	
+            if ($<type>$ != $<type>3) {
+           printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
+           type_to_string($<type>$), type_to_string($<type>3), yylineno);
+	} //if the arithops are not of the same type	
 	    int j = checkVar($<test.name>2); 
 	    char *type1 = varTypes[j];
 	 

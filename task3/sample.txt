@@ -3,8 +3,10 @@ var
   grade : char ;
   b,c,d,a,g: array [1..10] of Integer ;
   i,j: Integer;
+  f: Real;
   // the programs starts here
 begin
+  f := 7/2;
   while grade > 3 do
   begin
   j:=5;
