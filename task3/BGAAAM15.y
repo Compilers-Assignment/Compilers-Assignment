@@ -172,7 +172,7 @@
 %%
 
 start: PROGRAM IDENTIFIER SEMICOLON body 
-body: VAR declList BEG srcWithIf END PERIOD 
+body: VAR declList BEG src END PERIOD  
 declList: 
         | decl declList
 decl: vars COLON type SEMICOLON 
@@ -264,7 +264,7 @@ cond: arith_expression RELOP arith_expression {if($<type>$ != $<type>3) {printf(
 $<type>$ = $<type>3;}
 
 
-srcWithIf: 
+/* srcWithIf: 
     | ruleWithIf srcWithIf
     
 ruleWithIf: WRITE LPAREN printable RPAREN SEMICOLON
@@ -276,21 +276,31 @@ ruleWithIf: WRITE LPAREN printable RPAREN SEMICOLON
     | BEG srcWithIf END
 
 srcWithoutIf: 
-    | ruleWithoutIf srcWithoutIf
+    | ruleWithoutIf srcWithoutIf */
 
-ruleWithoutIf: WRITE LPAREN printable RPAREN SEMICOLON
+src: 
+    | rule src
+rule: WRITE LPAREN printable RPAREN SEMICOLON
+    | READ LPAREN readable RPAREN SEMICOLON
+    | ifCond
+    | forLoop
+    | whileLoop
+    | assignment
+    | BEG src END
+
+/* ruleWithoutIf: WRITE LPAREN printable RPAREN SEMICOLON
     | READ LPAREN readable RPAREN SEMICOLON
     | forLoopWithIf
     | whileLoopWithIf
     | assignment
-    | BEG srcWithIf END
+    | BEG srcWithIf END */
 
 readable: IDENTIFIER {int j = checkVar($<test.name>1); $<type>$ = tolower(varTypes[j][0]);} 
     | IDENTIFIER LBRACKET indexing RBRACKET //this is array bs we take lite for now
 
 indexing: arith_expression
 
-ifCond: IF conditionals THEN BEG matched END SEMICOLON
+/* ifCond: IF conditionals THEN BEG matched END SEMICOLON
     | IF conditionals THEN BEG matched END ELSE BEG 
     tail END SEMICOLON
     
@@ -298,10 +308,13 @@ matched: IF conditionals THEN BEG matched END ELSE BEG
     matched END SEMICOLON  
     | srcWithoutIf
 tail: IF conditionals THEN BEG tail END SEMICOLON 
-    | srcWithoutIf
+    | srcWithoutIf */
 
-forLoopWithIf: FOR IDENTIFIER ASGOP arith_expression range arith_expression
-    DO BEG srcWithIf END SEMICOLON 
+ifCond: IF conditionals THEN BEG src END SEMICOLON
+    | IF conditionals THEN BEG src END ELSE BEG src END SEMICOLON
+
+forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG src END SEMICOLON
+
     {	 
             if($<type>4 != $<type>6){printf("Type Mismatch."); yyerror(1);} //if the arithops are not of the same type	
 	    int j = checkVar($<test.name>2); 
@@ -337,8 +350,8 @@ forLoopWithIf: FOR IDENTIFIER ASGOP arith_expression range arith_expression
 	    }
 	}
     
-whileLoopWithIf: WHILE conditionals
-    DO BEG srcWithIf END SEMICOLON
+whileLoop: WHILE conditionals DO BEG src END SEMICOLON
+
 
 conditionals: bool_exp {$<type>$ = $<type>1;}
 
