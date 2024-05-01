@@ -441,12 +441,13 @@ readable: IDENTIFIER { int j = checkVar($<test.name>1); $<test.value>$ = atoi(va
 	      sprintf(str2, "%d", $<test.value>3);
 	      char *str3 = strcat(str2, "]");
 	      char *newStr = strcat(str, str3);
+		//   printf("%s--", newStr);
 	      int j = checkVar(newStr);
-	      
-	      $<test.value>$ = atoi(varValues[j]);
-	      
-	      $<type>$ = tolower(varTypes[j][0]);
-	      printf("type of - %c",$<type>$); 
+	      if(j!=-1){
+			$<test.value>$ = atoi(varValues[j]);
+			$<type>$ = tolower(varTypes[j][0]);
+			printf("type of - %c",$<type>$);
+		  }
     }//this is array bs we take lite for now
 
 indexing: arith_expression {$<test.value>$ = $<test.value>1;}
