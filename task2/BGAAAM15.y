@@ -18,86 +18,82 @@
 %%
 
 start: PROGRAM IDENTIFIER SEMICOLON body 
-body: VAR declList BEG srcWithIf END PERIOD 
-declList: 
-        | decl declList
+
+body: VAR declList BEG src END PERIOD 
+
+declList: decl declList
+    |
+
 decl: vars COLON type SEMICOLON 
     | vars COLON ARRAY LBRACKET INTLITERAL PERIOD PERIOD INTLITERAL RBRACKET OF type SEMICOLON
 
 vars: vars COMMA IDENTIFIER 
     | IDENTIFIER
 
-type: INTEGER | BOOLEAN | REAL | CHAR
+type: INTEGER 
+    | BOOLEAN 
+    | REAL 
+    | CHAR
+
 assignment: IDENTIFIER ASGOP expression SEMICOLON 
     | IDENTIFIER LBRACKET indexing RBRACKET ASGOP expression SEMICOLON
 
-expression: arith_expression | bool_exp
+expression: arith_expression 
+    | bool_exp
 
 arith_expression: arith_expression ADDOP tExpression 
     | tExpression
 
 tExpression: tExpression MULOP fExpression 
     | fExpression
+
 fExpression: LPAREN arith_expression RPAREN 
     | readable 
     | INTLITERAL 
     | CHAR_LIT
 
-
 bool_exp: term
     | bool_exp OR term
+
 term: factor
     | term AND factor
+
 factor: cond
     | NOT factor
-    | LPAREN bool_exp RPAREN | IDENTIFIER
+    | LPAREN bool_exp RPAREN 
+    | IDENTIFIER
 
-printable: STRING | printable COMMA readable | printable COMMA STRING | arith_expression
-range: TO | DOWNTO
+printable: STRING 
+    | printable COMMA readable 
+    | printable COMMA STRING 
+    | arith_expression
+
+range: TO 
+    | DOWNTO
 
 cond: arith_expression RELOP arith_expression
 
-
-srcWithIf: 
-    | ruleWithIf srcWithIf
-ruleWithIf: WRITE LPAREN printable RPAREN SEMICOLON
+src: 
+    | rule src
+rule: WRITE LPAREN printable RPAREN SEMICOLON
     | READ LPAREN readable RPAREN SEMICOLON
     | ifCond
-    | forLoopWithIf
-    | whileLoopWithIf
+    | forLoop
+    | whileLoop
     | assignment
-    | BEG srcWithIf END
-
-srcWithoutIf: 
-    | ruleWithoutIf srcWithoutIf
-
-ruleWithoutIf: WRITE LPAREN printable RPAREN SEMICOLON
-    | READ LPAREN readable RPAREN SEMICOLON
-    | forLoopWithIf
-    | whileLoopWithIf
-    | assignment
-    | BEG srcWithIf END
+    | BEG src END
 
 readable: IDENTIFIER 
     | IDENTIFIER LBRACKET indexing RBRACKET 
 
 indexing: arith_expression
 
-ifCond: IF conditionals THEN BEG matched END SEMICOLON
-    | IF conditionals THEN BEG matched END ELSE BEG 
-    tail END SEMICOLON
+ifCond: IF conditionals THEN BEG src END SEMICOLON
+    | IF conditionals THEN BEG src END ELSE BEG src END SEMICOLON
     
-matched: IF conditionals THEN BEG matched END ELSE BEG 
-    matched END SEMICOLON  
-    | srcWithoutIf
-tail: IF conditionals THEN BEG tail END SEMICOLON 
-    | srcWithoutIf
-
-forLoopWithIf: FOR IDENTIFIER ASGOP arith_expression range arith_expression
-    DO BEG srcWithIf END SEMICOLON
+forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG src END SEMICOLON
     
-whileLoopWithIf: WHILE conditionals
-    DO BEG srcWithIf END SEMICOLON
+whileLoop: WHILE conditionals DO BEG src END SEMICOLON
 
 conditionals: bool_exp
 
