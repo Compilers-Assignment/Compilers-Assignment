@@ -158,8 +158,8 @@ start: PROGRAM IDENTIFIER SEMICOLON body {
     push(parseStack, node);
 }
 
-body: VAR declList BEG nonEmptySrcWithIf END PERIOD {
-    treeNode *nonEmptySrcWithIfNode = pop(parseStack);
+body: VAR declList BEG srcWithIf END PERIOD {
+    treeNode *srcWithIfNode = pop(parseStack);
     treeNode *declListNode = pop(parseStack);
 
     treeNode *node = createNode("body", NULL);
@@ -167,7 +167,7 @@ body: VAR declList BEG nonEmptySrcWithIf END PERIOD {
     addChild(node, createNode("VAR", "VAR"));
     addChild(node, declListNode);
     addChild(node, createNode("BEG", "BEGIN"));
-    addChild(node, nonEmptySrcWithIfNode);
+    addChild(node, srcWithIfNode);
     addChild(node, createNode("END", "END"));
     addChild(node, createNode("PERIOD", "."));
 
@@ -535,23 +535,6 @@ cond: arith_expression RELOP arith_expression {
     push(parseStack, node);
 }
 
-nonEmptySrcWithIf:  {
-        treeNode *node = createNode("nonEmptySrcWithIf", NULL);
-
-        push(parseStack, node);
-    }
-    | ruleWithIf srcWithIf {
-        treeNode *srcWithIfNode = pop(parseStack);
-        treeNode *ruleWithIfNode = pop(parseStack);
-
-        treeNode *node = createNode("nonEmptySrcWithIf", NULL);
-        
-        addChild(node, ruleWithIfNode);
-        addChild(node, srcWithIfNode);
-
-        push(parseStack, node);
-    }
-
 srcWithIf: {
         treeNode *node = createNode("srcWithIf", NULL);
 
@@ -631,39 +614,39 @@ ruleWithIf: WRITE LPAREN printable RPAREN SEMICOLON {
 
         push(parseStack, node);
     }
-    | BEG nonEmptySrcWithIf END {
-        treeNode *nonEmptySrcWithIfNode = pop(parseStack);
+    | BEG srcWithIf END {
+        treeNode *srcWithIfNode = pop(parseStack);
 
         treeNode *node = createNode("ruleWithIf", NULL);
 
         addChild(node, createNode("BEG", "BEGIN"));
-        addChild(node, nonEmptySrcWithIfNode);
+        addChild(node, srcWithIfNode);
         addChild(node, createNode("END", "END"));
 
         push(parseStack, node);
     }
 
-nonsrcWithIf: {
-        treeNode *node = createNode("nonsrcWithIf", NULL);
+srcWithoutIf: {
+        treeNode *node = createNode("srcWithoutIf", NULL);
 
         push(parseStack, node);
     }
-    | nonIf nonsrcWithIf {
-        treeNode *nonsrcWithIfNode = pop(parseStack);
-        treeNode *nonIfNode = pop(parseStack);
+    | ruleWithoutIf srcWithoutIf {
+        treeNode *srcWithoutIfNode = pop(parseStack);
+        treeNode *ruleWithoutIfNode = pop(parseStack);
 
-        treeNode *node = createNode("nonsrcWithIf", NULL);
+        treeNode *node = createNode("srcWithoutIf", NULL);
         
-        addChild(node, nonIfNode);
-        addChild(node, nonsrcWithIfNode);
+        addChild(node, ruleWithoutIfNode);
+        addChild(node, srcWithoutIfNode);
 
         push(parseStack, node);
     }
 
-nonIf: WRITE LPAREN printable RPAREN SEMICOLON {
+ruleWithoutIf: WRITE LPAREN printable RPAREN SEMICOLON {
         treeNode *printableNode = pop(parseStack);
 
-        treeNode *node = createNode("nonIf", NULL);
+        treeNode *node = createNode("ruleWithoutIf", NULL);
 
         addChild(node, createNode("WRITE", "WRITE"));
         addChild(node, createNode("LPAREN", "("));
@@ -676,7 +659,7 @@ nonIf: WRITE LPAREN printable RPAREN SEMICOLON {
     | READ LPAREN readable RPAREN SEMICOLON {
         treeNode *readableNode = pop(parseStack);
 
-        treeNode *node = createNode("nonIf", NULL);
+        treeNode *node = createNode("ruleWithoutIf", NULL);
 
         addChild(node, createNode("READ", "READ"));
         addChild(node, createNode("LPAREN", "("));
@@ -689,7 +672,7 @@ nonIf: WRITE LPAREN printable RPAREN SEMICOLON {
     | forLoopWithIf {
         treeNode *forLoopWithIfNode = pop(parseStack);
 
-        treeNode *node = createNode("nonIf", NULL);
+        treeNode *node = createNode("ruleWithoutIf", NULL);
         
         addChild(node, forLoopWithIfNode);
 
@@ -698,7 +681,7 @@ nonIf: WRITE LPAREN printable RPAREN SEMICOLON {
     | whileLoopWithIf {
         treeNode *whileLoopWithIfNode = pop(parseStack);
 
-        treeNode *node = createNode("nonIf", NULL);
+        treeNode *node = createNode("ruleWithoutIf", NULL);
         
         addChild(node, whileLoopWithIfNode);
 
@@ -707,19 +690,19 @@ nonIf: WRITE LPAREN printable RPAREN SEMICOLON {
     | assignment {
         treeNode *assignmentNode = pop(parseStack);
 
-        treeNode *node = createNode("nonIf", NULL);
+        treeNode *node = createNode("ruleWithoutIf", NULL);
         
         addChild(node, assignmentNode);
 
         push(parseStack, node);
     }
-    | BEG nonEmptySrcWithIf END {
-        treeNode *nonEmptySrcWithIfNode = pop(parseStack);
+    | BEG srcWithIf END {
+        treeNode *srcWithIfNode = pop(parseStack);
 
-        treeNode *node = createNode("nonIf", NULL);
+        treeNode *node = createNode("ruleWithoutIf", NULL);
 
         addChild(node, createNode("BEG", "BEGIN"));
-        addChild(node, nonEmptySrcWithIfNode);
+        addChild(node, srcWithIfNode);
         addChild(node, createNode("END", "END"));
 
         push(parseStack, node);
@@ -745,17 +728,12 @@ readable: IDENTIFIER {
         push(parseStack, node);
     }
 
-indexing: IDENTIFIER {
+indexing: arith_expression {
+        treeNode *arithExpressionNode = pop(parseStack);
+
         treeNode *node = createNode("indexing", NULL);
 
-        addChild(node, createNode("IDENTIFIER", $<string>1));
-
-        push(parseStack, node);
-    }
-    | INTLITERAL {
-        treeNode *node = createNode("indexing", NULL);
-
-        addChild(node, createNode("INTLITERAL", $<string>1));
+        addChild(node, arithExpressionNode);
 
         push(parseStack, node);
     }
@@ -819,12 +797,12 @@ matched: IF conditionals THEN BEG matched END ELSE BEG matched END SEMICOLON {
 
         push(parseStack, node);
     } 
-    | nonsrcWithIf {
-        treeNode *nonsrcWithIfNode = pop(parseStack);
+    | srcWithoutIf {
+        treeNode *srcWithoutIfNode = pop(parseStack);
 
         treeNode *node = createNode("matched", NULL);
         
-        addChild(node, nonsrcWithIfNode);
+        addChild(node, srcWithoutIfNode);
 
         push(parseStack, node);
     }
@@ -845,18 +823,18 @@ tail: IF conditionals THEN BEG tail END SEMICOLON {
 
         push(parseStack, node);
     } 
-    | nonsrcWithIf {
-        treeNode *nonsrcWithIfNode = pop(parseStack);
+    | srcWithoutIf {
+        treeNode *srcWithoutIfNode = pop(parseStack);
 
         treeNode *node = createNode("tail", NULL);
         
-        addChild(node, nonsrcWithIfNode);
+        addChild(node, srcWithoutIfNode);
 
         push(parseStack, node);
     }
 
-forLoopWithIf: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG nonEmptySrcWithIf END SEMICOLON {
-    treeNode *nonEmptySrcWithIfNode = pop(parseStack);
+forLoopWithIf: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG srcWithIf END SEMICOLON {
+    treeNode *srcWithIfNode = pop(parseStack);
     treeNode *rangeNode = pop(parseStack);
     treeNode *arithExpressionNode2 = pop(parseStack);
     treeNode *arithExpressionNode1 = pop(parseStack);
@@ -871,15 +849,15 @@ forLoopWithIf: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO B
     addChild(node, arithExpressionNode2);
     addChild(node, createNode("DO", "DO"));
     addChild(node, createNode("BEG", "BEGIN"));
-    addChild(node, nonEmptySrcWithIfNode);
+    addChild(node, srcWithIfNode);
     addChild(node, createNode("END", "END"));
     addChild(node, createNode("SEMICOLON", ";"));
 
     push(parseStack, node);
 }
 
-whileLoopWithIf: WHILE conditionals DO BEG nonEmptySrcWithIf END SEMICOLON {
-    treeNode *nonEmptySrcWithIfNode = pop(parseStack);
+whileLoopWithIf: WHILE conditionals DO BEG srcWithIf END SEMICOLON {
+    treeNode *srcWithIfNode = pop(parseStack);
     treeNode *conditionalsNode = pop(parseStack);
 
     treeNode *node = createNode("whileLoopWithIf", NULL);
@@ -888,7 +866,7 @@ whileLoopWithIf: WHILE conditionals DO BEG nonEmptySrcWithIf END SEMICOLON {
     addChild(node, conditionalsNode);
     addChild(node, createNode("DO", "DO"));
     addChild(node, createNode("BEG", "BEGIN"));
-    addChild(node, nonEmptySrcWithIfNode);
+    addChild(node, srcWithIfNode);
     addChild(node, createNode("END", "END"));
     addChild(node, createNode("SEMICOLON", ";"));
 
