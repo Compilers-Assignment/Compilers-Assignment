@@ -192,6 +192,7 @@ const char* type_to_string(char typeCode) {
        int value;
        char *val;
     }test;
+	char *string;
 }
 
 %%
@@ -249,8 +250,12 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 	    //printf("Type of the RHS is %s\n", type2);
 	    
 	    if (strcmp(type1, type2) != 0) {
-		printf("Type mismatch. Attempted to assign %s to %s. ", type2, type1);
-		yyerror(1);
+			if(strcmp(type1, "real") && strcmp(type2, "int")){
+
+			}else{
+				printf("Type mismatch. Attempted to assign %s to %s. ", type2, type1);
+				yyerror(1);
+			}
 	    }
 	    
 	    sprintf(varValues[j], "%d", $<test.value>3);}
@@ -320,20 +325,45 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 expression: arith_expression {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}| bool_exp {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
 
 arith_expression: arith_expression ADDOP tExpression {
-if ($<type>1 != $<type>3) {
+	if(($<type>1 == 'i' && $<type>3 == 'r') || ($<type>1 == 'r' && $<type>3 == 'i')){
+		
+	}else if ($<type>1 != $<type>3) {
     printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
            type_to_string($<type>1), type_to_string($<type>3), yylineno);
+	}
+ 	$<test.value>$ = $<test.value>1 + $<test.value>3; 
+	// $<type>$ = $<type>3;
+	if($<type>1 != $<type>3){
+		$<type>$ = 'r';
+	}else{
+		$<type>$ = $<type>3;
+	}
+} 
+
+    | tExpression {
+	$<test.value>$ = $<test.value>1; 
+	$<type>$ = $<type>1;
 }
- $<test.value>$ = $<test.value>1 + $<test.value>3; $<type>$ = $<type>3;} 
-    | tExpression {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
 
 tExpression: tExpression MULOP fExpression {
-
-if ($<type>1 != $<type>3) {
+	if(($<type>1 == 'i' && $<type>3 == 'r') || ($<type>1 == 'r' && $<type>3 == 'i')){
+		
+	}else if ($<type>1 != $<type>3) {
     printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
            type_to_string($<type>1), type_to_string($<type>3), yylineno);
-}
-$<test.value>$ = $<test.value>1 * $<test.value>3; $<type>$ = $<type>3;} 
+	}
+ 	$<test.value>$ = $<test.value>1 + $<test.value>3; 
+	// $<type>$ = $<type>3;
+	if($<type>1 != $<type>3){
+		$<type>$ = 'r';
+	}else{
+		if(!strcmp($<string>2, "/")){
+			$<type>$ = 'r';
+		}else{
+			$<type>$ = $<type>3;
+		}
+	}
+} 
     | fExpression {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1; }
     
 fExpression: LPAREN arith_expression RPAREN {$<test.value>$ = $<test.value>2; $<type>$ = $<type>2;}
