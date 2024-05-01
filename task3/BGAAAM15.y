@@ -192,6 +192,7 @@ const char* type_to_string(char typeCode) {
        int value;
        char *val;
     }test;
+	char *string;
 }
 
 %%
@@ -249,8 +250,12 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 	    //printf("Type of the RHS is %s\n", type2);
 	    
 	    if (strcmp(type1, type2) != 0) {
-		printf("Type mismatch. Attempted to assign %s to %s. ", type2, type1);
-		yyerror(1);
+			if(strcmp(type1, "real")==0 && strcmp(type2, "int")==0){
+
+			}else{
+				printf("Type mismatch. Attempted to assign %s to %s. ", type2, type1);
+				yyerror(1);
+			}
 	    }
 	    
 	    //sprintf(varValues[j], "%d", $<test.value>3);}
@@ -325,28 +330,51 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 expression: arith_expression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}| bool_exp {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
 
 arith_expression: arith_expression ADDOP tExpression {
-if ($<type>1 != $<type>3) {
+	if(($<type>1 == 'i' && $<type>3 == 'r') || ($<type>1 == 'r' && $<type>3 == 'i')){
+		
+	}else if ($<type>1 != $<type>3) {
     printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
            type_to_string($<type>1), type_to_string($<type>3), yylineno);
-}
-int tempint = atoi($<test.val>1) + atoi($<test.val>3);
-char tempchar[25];
-sprintf(tempchar, "%d", tempint);
-$<test.val>$ = strdup(tempchar);
- $<test.value>$ = $<test.value>1 + $<test.value>3; $<type>$ = $<type>3;} 
+	}
+ 	$<test.value>$ = $<test.value>1 + $<test.value>3; 
+	// $<type>$ = $<type>3;
+	if($<type>1 != $<type>3){
+		$<type>$ = 'r';
+	}else{
+		$<type>$ = $<type>3;
+	}
+	int tempint = atoi($<test.val>1) + atoi($<test.val>3);
+	char tempchar[25];
+	sprintf(tempchar, "%d", tempint);
+	$<test.val>$ = strdup(tempchar);
+	$<test.value>$ = $<test.value>1 + $<test.value>3;
+ } 
+
+
     | tExpression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
 
 tExpression: tExpression MULOP fExpression {
-
-if ($<type>1 != $<type>3) {
-    printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
-           type_to_string($<type>1), type_to_string($<type>3), yylineno);
-}
-int tempint = atoi($<test.val>1) * atoi($<test.val>3);
-char tempchar[25];
-sprintf(tempchar, "%d", tempint);
-$<test.val>$ = strdup(tempchar);
-$<test.value>$ = $<test.value>1 * $<test.value>3; $<type>$ = $<type>3;} 
+	if(($<type>1 == 'i' && $<type>3 == 'r') || ($<type>1 == 'r' && $<type>3 == 'i')){
+		
+	}else if ($<type>1 != $<type>3) {
+    	printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
+        type_to_string($<type>1), type_to_string($<type>3), yylineno);
+	}
+	int tempint = atoi($<test.val>1) * atoi($<test.val>3);
+	char tempchar[25];
+	sprintf(tempchar, "%d", tempint);
+	if($<type>1 != $<type>3){
+		$<type>$ = 'r';
+	}else{
+		if(!strcmp($<string>2, "/")){
+			$<type>$ = 'r';
+		}else{
+			$<type>$ = $<type>3;
+		}
+	}
+	$<test.val>$ = strdup(tempchar);
+	$<test.value>$ = $<test.value>1 * $<test.value>3;
+} 
     | fExpression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1; }
     
 fExpression: LPAREN arith_expression RPAREN {$<test.val>$ = strdup($<test.val>2); $<test.value>$ = $<test.value>2; $<type>$ = $<type>2;}
@@ -424,13 +452,16 @@ readable: IDENTIFIER { int j = checkVar($<test.name>1); $<test.val>$ = strdup(va
 	      sprintf(str2, "%d", $<test.value>3);
 	      char *str3 = strcat(str2, "]");
 	      char *newStr = strcat(str, str3);
+		//   printf("%s--", newStr);
 	      int j = checkVar(newStr);
 	      
-	      $<test.val>$ = varValues[j];
-	      $<test.value>$ = atoi(varValues[j]);
 	      
+	      if(j!=-1){
+			$<test.val>$ = varValues[j];
+	      $<test.value>$ = atoi(varValues[j]);
 	      $<type>$ = tolower(varTypes[j][0]);
 	      printf("type of - %c",$<type>$); 
+		  }
     }//this is array bs we take lite for now
 
 indexing: arith_expression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1;}
