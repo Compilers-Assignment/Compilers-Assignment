@@ -119,7 +119,7 @@
 	    printf("Current Variables List:\n");
 	    for (int i = 0; i < varCount; ++i) {
 		if (varNames[i] != NULL) {
-		    printf("Variable & Type %d: %s %s\n", i + 1, varNames[i], varTypes[i]);
+		    printf("Variable & Type %d: %s %s %s\n", i + 1, varNames[i], varTypes[i], varValues[i]);
 	    
 		} else {
 		    printf("Variable %d: [Unassigned]\n", i + 1);
@@ -253,7 +253,9 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 		yyerror(1);
 	    }
 	    
-	    sprintf(varValues[j], "%d", $<test.value>3);}
+	    //sprintf(varValues[j], "%d", $<test.value>3);}
+	    varValues[j] = strdup($<test.val>3);
+	 }
 }
 
     | IDENTIFIER LBRACKET indexing RBRACKET ASGOP expression SEMICOLON //INDEXING NOT DONE
@@ -312,20 +314,27 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 		printf("Type mismatch. Attempted to assign %s to %s. ", type2, type1);
 		yyerror(1);
 	    }
+	    
+	    	    varValues[j] = strdup($<test.val>3);
+	    	    
 	    }
 	    
 	    
 }
 
-expression: arith_expression {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}| bool_exp {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
+expression: arith_expression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}| bool_exp {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
 
 arith_expression: arith_expression ADDOP tExpression {
 if ($<type>1 != $<type>3) {
     printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
            type_to_string($<type>1), type_to_string($<type>3), yylineno);
 }
+int tempint = atoi($<test.val>1) + atoi($<test.val>3);
+char tempchar[25];
+sprintf(tempchar, "%d", tempint);
+$<test.val>$ = strdup(tempchar);
  $<test.value>$ = $<test.value>1 + $<test.value>3; $<type>$ = $<type>3;} 
-    | tExpression {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
+    | tExpression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
 
 tExpression: tExpression MULOP fExpression {
 
@@ -333,12 +342,16 @@ if ($<type>1 != $<type>3) {
     printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
            type_to_string($<type>1), type_to_string($<type>3), yylineno);
 }
+int tempint = atoi($<test.val>1) * atoi($<test.val>3);
+char tempchar[25];
+sprintf(tempchar, "%d", tempint);
+$<test.val>$ = strdup(tempchar);
 $<test.value>$ = $<test.value>1 * $<test.value>3; $<type>$ = $<type>3;} 
-    | fExpression {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1; }
+    | fExpression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1; }
     
-fExpression: LPAREN arith_expression RPAREN {$<test.value>$ = $<test.value>2; $<type>$ = $<type>2;}
-    | readable {$<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
-    | INTLITERAL {$<test.value>$ = $<test.value>1; $<type>$ = 'i';}
+fExpression: LPAREN arith_expression RPAREN {$<test.val>$ = strdup($<test.val>2); $<test.value>$ = $<test.value>2; $<type>$ = $<type>2;}
+    | readable {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
+    | INTLITERAL {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = 'i';}
     | CHAR_LIT {$<type>$ = 'c';}
 
 
@@ -403,7 +416,7 @@ rule: WRITE LPAREN printable RPAREN SEMICOLON
     | assignment
     | BEG srcWithIf END */
 
-readable: IDENTIFIER { int j = checkVar($<test.name>1); $<test.value>$ = atoi(varValues[j]); $<type>$ = tolower(varTypes[j][0]);} 
+readable: IDENTIFIER { int j = checkVar($<test.name>1); $<test.val>$ = strdup(varValues[j]); $<test.value>$ = atoi(varValues[j]); $<type>$ = tolower(varTypes[j][0]);} 
     | IDENTIFIER LBRACKET indexing RBRACKET 
     {
     	      char *str = strcat($<test.name>1, "[");
@@ -413,13 +426,14 @@ readable: IDENTIFIER { int j = checkVar($<test.name>1); $<test.value>$ = atoi(va
 	      char *newStr = strcat(str, str3);
 	      int j = checkVar(newStr);
 	      
+	      $<test.val>$ = varValues[j];
 	      $<test.value>$ = atoi(varValues[j]);
 	      
 	      $<type>$ = tolower(varTypes[j][0]);
 	      printf("type of - %c",$<type>$); 
     }//this is array bs we take lite for now
 
-indexing: arith_expression {$<test.value>$ = $<test.value>1;}
+indexing: arith_expression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1;}
 
 /* ifCond: IF conditionals THEN BEG matched END SEMICOLON
     | IF conditionals THEN BEG matched END ELSE BEG 
@@ -485,6 +499,7 @@ conditionals: bool_exp {$<type>$ = $<type>1;}
 void main(){
     yyin = fopen("sample.txt", "r");
     yyparse();
+    printVariableList();
     printf("valid input\n");
     fclose(yyin);
 }
