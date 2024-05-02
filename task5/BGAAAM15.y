@@ -262,6 +262,26 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON {
         push(parseStack, node);
     }
 
+    readable: IDENTIFIER {
+        treeNode *node = createNode("readable", NULL);
+
+        addChild(node, createNode("IDENTIFIER", $<string>1));
+
+        push(parseStack, node);
+    }
+    | IDENTIFIER LBRACKET indexing RBRACKET {
+        treeNode *indexingNode = pop(parseStack);
+
+        treeNode *node = createNode("readable", NULL);
+
+        addChild(node, createNode("IDENTIFIER", $<string>1));
+        addChild(node, createNode("LBRACKET", "["));
+        addChild(node, indexingNode);
+        addChild(node, createNode("RBRACKET", "]"));
+
+        push(parseStack, node);
+    }
+
 expression: arith_expression {
         treeNode *arithExpressionNode = pop(parseStack);
 
@@ -596,26 +616,6 @@ rule: WRITE LPAREN printable RPAREN SEMICOLON {
         addChild(node, createNode("BEG", "BEGIN"));
         addChild(node, srcNode);
         addChild(node, createNode("END", "END"));
-
-        push(parseStack, node);
-    }
-  
-readable: IDENTIFIER {
-        treeNode *node = createNode("readable", NULL);
-
-        addChild(node, createNode("IDENTIFIER", $<string>1));
-
-        push(parseStack, node);
-    }
-    | IDENTIFIER LBRACKET indexing RBRACKET {
-        treeNode *indexingNode = pop(parseStack);
-
-        treeNode *node = createNode("readable", NULL);
-
-        addChild(node, createNode("IDENTIFIER", $<string>1));
-        addChild(node, createNode("LBRACKET", "["));
-        addChild(node, indexingNode);
-        addChild(node, createNode("RBRACKET", "]"));
 
         push(parseStack, node);
     }
