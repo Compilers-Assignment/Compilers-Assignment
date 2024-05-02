@@ -224,7 +224,7 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 	    int j = checkVar($<test.name>1); 
 	    if(j!=-1){
 	    char *type1 = varTypes[j];
-	    
+	    int flag=0;
 	    char *type2;
 	    switch ($<type>3) {
 		case 'i':
@@ -240,26 +240,32 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 		    type2 = "bool";
 		    break;
 		default:
-		    type2 = "unknown";
-		    printf("Error: Unknown type '%c'\n", $<type>3);
-		    
+		    // type2 = "unknown";
+			// printf("asfasdfsdf");
+		    // printf("Error: Unknown type '%c'\n", $<type>3);
+		    flag=1;
 		    break;
 	    }
 
 	    //printf("Type of the variable is %s\n", type1);
 	    //printf("Type of the RHS is %s\n", type2);
-	    
+	    if(flag==0){
 	    if (strcmp(type1, type2) != 0) {
 			if(strcmp(type1, "real")==0 && strcmp(type2, "int")==0){
-
+				varValues[j] = strdup($<test.val>3);
 			}else{
+				if(type1[0] == 'a'){
+					type1 = strdup("array");
+				}
 				printf("Type mismatch. Attempted to assign %s to %s. ", type2, type1);
 				yyerror(1);
 			}
-	    }
-	    
+	    }else{
+			varValues[j] = strdup($<test.val>3);
+		}
+		}
 	    //sprintf(varValues[j], "%d", $<test.value>3);}
-	    varValues[j] = strdup($<test.val>3);
+	    
 	 }
 }
 
@@ -275,11 +281,10 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 	    //sprintf(str,"%d",$<test.value>3);
 	    //printf("ss"); 
 
-	    
+	   
 	      char *str = strcat($<test.name>1, "[");
 	      //printf("%s", str);
-	      char str2[10];
-	      sprintf(str2, "%d", $<test.value>3);
+	      char *str2 = strdup($<test.val>3);
 	      //printf("%s", str2);
 	      char *str3 = strcat(str2, "]");
 	      char *newStr = strcat(str, str3);
@@ -288,7 +293,7 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 	    int j = checkVar(newStr);
 	    if(j!=-1){
 	    char *type1 = varTypes[j];
-	    
+	    int flag=0;
 	    //printf("Index value is %d ", $<test.value>3);
 	 
 	    char *type2;
@@ -306,25 +311,39 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 		    type2 = "bool";
 		    break;
 		default:
-		    type2 = "unknown";
-		    printf("Error: Unknown type '%c'\n", $<type>3);
-		    
+		    // type2 = "unknown";
+			
+		    // printf("Error: Unknown type '%c'\n", $<type>3);
+		    flag=1;
 		    break;
 	    }
 
 	    //printf("Type of the variable is %s\n", type1);
 	    //printf("Type of the RHS is %s\n", type2);
 	    
-	    if (strcmp(type1, type2) != 0) {
-		printf("Type mismatch. Attempted to assign %s to %s. ", type2, type1);
-		yyerror(1);
-	    }
-	    
-	    	    varValues[j] = strdup($<test.val>3);
-	    	    
-	    }
-	    
-	    
+	    // if (strcmp(type1, type2) != 0) {
+		// 	printf("Type mismatch. Attempted to assign %s to %s. ", type2, type1);
+		// 	yyerror(1);
+	    // }else{
+	    // 	varValues[j] = strdup($<test.val>3);
+		// }
+		if(flag==0){
+		if (strcmp(type1, type2) != 0) {
+			if(strcmp(type1, "real")==0 && strcmp(type2, "int")==0){
+				if($<type>3 == 'i'){
+					varValues[j] = strdup($<test.val>6);
+				}
+			}else{
+				printf("Type mismatch. Attempted to assign %s to %s. ", type2, type1);
+				yyerror(1);
+			}
+	    }else{
+			if($<type>3 == 'i'){
+				varValues[j] = strdup($<test.val>6);
+			}
+		}
+		}
+	}	    
 }
 
 expression: arith_expression {
@@ -339,8 +358,9 @@ arith_expression: arith_expression ADDOP tExpression {
 	if(($<type>1 == 'i' && $<type>3 == 'r') || ($<type>1 == 'r' && $<type>3 == 'i')){
 		
 	}else if ($<type>1 != $<type>3) {
+		if(!(strcmp(type_to_string($<type>1), "unknown")==0 || strcmp(type_to_string($<type>3), "unknown")==0)){
     printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
-           type_to_string($<type>1), type_to_string($<type>3), yylineno);
+           type_to_string($<type>1), type_to_string($<type>3), yylineno);}
 	}
  	$<test.value>$ = $<test.value>1 + $<test.value>3; 
 	// $<type>$ = $<type>3;
@@ -350,15 +370,24 @@ arith_expression: arith_expression ADDOP tExpression {
 		$<type>$ = $<type>3;
 	}
 	// int tempint = atoi($<test.val>1) + atoi($<test.val>3);
-	char tempchar[25];
+	char tempchar[25] = "NULL";
+	int f=0;
 	if($<type>$ == 'r'){
 		float tempval;
 		if(!strcmp($<string>2, "+")){
-			tempval = atof($<test.val>1) + atof($<test.val>3);
+			if(strcmp($<test.val>1, "NULL") && strcmp($<test.val>3, "NULL")){
+				tempval = atof($<test.val>1) + atof($<test.val>3);
+			}else{
+				f=1;
+			}
 		}else if(!strcmp($<string>2, "-")){
-			tempval = atof($<test.val>1) - atof($<test.val>3);
+			if(strcmp($<test.val>1, "NULL") && strcmp($<test.val>3, "NULL"))
+				tempval = atof($<test.val>1) - atof($<test.val>3);
+			else
+				f=1;
 		}
-		sprintf(tempchar, "%f", tempval);
+		if(f==0)
+			sprintf(tempchar, "%f", tempval);
 	}else{
 		int tempval;
 		if(!strcmp($<string>2, "+")){
@@ -380,8 +409,9 @@ tExpression: tExpression MULOP fExpression {
 	if(($<type>1 == 'i' && $<type>3 == 'r') || ($<type>1 == 'r' && $<type>3 == 'i')){
 		
 	}else if ($<type>1 != $<type>3) {
+		if(!(strcmp(type_to_string($<type>1), "unknown")==0 || strcmp(type_to_string($<type>3), "unknown")==0)){
     	printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
-        type_to_string($<type>1), type_to_string($<type>3), yylineno);
+        type_to_string($<type>1), type_to_string($<type>3), yylineno);}
 	}
 	//int tempint = atoi($<test.val>1) * atoi($<test.val>3);
 	//char tempchar[25];
@@ -399,14 +429,19 @@ tExpression: tExpression MULOP fExpression {
 	if($<type>$ == 'r' && !strcmp($<string>2, "%")){
 		printf("Use of real datatype with %% operator. Line number: %d", yylineno);
 	}
-	char tempchar[25];
-	
+	char tempchar[25] = "NULL";
+	int f=0;
 	if(!strcmp($<string>2, "/")){
 		if($<type>$ == 'r'){
 			float tempvar;
 			
-			tempvar = atof($<test.val>1) / atof($<test.val>3);
-			sprintf(tempchar, "%f", tempvar);
+			if(strcmp($<test.val>1, "NULL") && strcmp($<test.val>3, "NULL"))
+			{
+				tempvar = atof($<test.val>1) * atof($<test.val>3);
+				sprintf(tempchar, "%f", tempvar);
+			}else{
+				f=1;
+			}
 		}else{
 			int tempvar;
 			
@@ -416,9 +451,11 @@ tExpression: tExpression MULOP fExpression {
 	}else if(!strcmp($<string>2, "*")){
 		if($<type>$ == 'r'){
 			float tempvar;
-			
-			tempvar = atof($<test.val>1) * atof($<test.val>3);
-			sprintf(tempchar, "%f", tempvar);
+			if(strcmp($<test.val>1, "NULL") && strcmp($<test.val>3, "NULL"))
+			{
+				tempvar = atof($<test.val>1) * atof($<test.val>3);
+				sprintf(tempchar, "%f", tempvar);
+			}
 		}else{
 			int tempvar;
 			
@@ -446,15 +483,17 @@ fExpression: LPAREN arith_expression RPAREN {$<test.val>$ = strdup($<test.val>2)
 bool_exp: term {$<type>$ = $<type>1;}
     | bool_exp OR term {
    if ($<type>1 != $<type>3) {
+	   if(!(strcmp(type_to_string($<type>1), "unknown")==0 || strcmp(type_to_string($<type>3), "unknown")==0)){
     printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
-           type_to_string($<type>1), type_to_string($<type>3), yylineno);
+           type_to_string($<type>1), type_to_string($<type>3), yylineno);}
 } $<type>$ = $<type>3;} //CHANGE
     
 term: factor {$<type>$ = $<type>1;}
     | term AND factor {
     if ($<type>1 != $<type>3) {
+		if(!(strcmp(type_to_string($<type>1), "unknown")==0 || strcmp(type_to_string($<type>3), "unknown")==0)){
     printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
-           type_to_string($<type>1), type_to_string($<type>3), yylineno);
+           type_to_string($<type>1), type_to_string($<type>3), yylineno);}
 } $<type>$ = $<type>3;} //CHANGE
     
 factor: cond {$<type>$ = $<type>1;}
@@ -467,8 +506,9 @@ printable: STRING | printable COMMA readable | printable COMMA STRING | arith_ex
 range: TO | DOWNTO
 
 cond: arith_expression RELOP arith_expression {if ($<type>1 != $<type>3) {
+	if(!(strcmp(type_to_string($<type>1), "unknown")==0 || strcmp(type_to_string($<type>3), "unknown")==0)){
     printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
-           type_to_string($<type>1), type_to_string($<type>3), yylineno);
+           type_to_string($<type>1), type_to_string($<type>3), yylineno);}
 } 
 $<type>$ = $<type>3;}
 
@@ -504,33 +544,72 @@ rule: WRITE LPAREN printable RPAREN SEMICOLON
     | assignment
     | BEG srcWithIf END */
 
-readable: IDENTIFIER { int j = checkVar($<test.name>1); $<test.val>$ = strdup(varValues[j]); if(strcmp($<test.val>$, safe) == 0) {printf("Variable %s used before it is assigned a value. ", $<test.name>1); yyerror(1);} $<test.value>$ = atoi(varValues[j]); $<type>$ = tolower(varTypes[j][0]);} 
+readable: IDENTIFIER 
+{ 
+	int j = checkVar($<test.name>1); 
+	if(j != -1){
+		$<test.val>$ = strdup(varValues[j]); 
+		if(strcmp($<test.val>$, safe) == 0) 
+		{
+			if($<type>1 != 'i' && $<type>1 != 'b' && $<type>1 != 'r'){
+				printf("Array identifier used without indexing - %s. ", $<test.name>1);
+				yyerror(1);
+			}
+			else{
+				printf("Variable %s used before it is assigned a value. ", $<test.name>1); 
+			yyerror(1);
+			}
+		}else{
+			$<test.val>$ = strdup(varValues[j]); 
+			$<type>$ = tolower(varTypes[j][0]);
+		}
+	}else{
+		$<test.val>$ = "NULL";
+	}
+	// printf("hhsd - %s", $<test.val>1);
+} 
     | IDENTIFIER LBRACKET indexing RBRACKET 
     {
-    	      char *str = strcat($<test.name>1, "[");
-	      char str2[10];
-	      sprintf(str2, "%d", $<test.value>3);
+    	  char *str = strcat($<test.name>1, "[");
+	      char *str2 = strdup($<test.val>3);
+		  if(strcmp(str2,"NULL")){
 	      char *str3 = strcat(str2, "]");
 	      char *newStr = strcat(str, str3);
-		//   printf("%s--", newStr);
+		  //printf("%s--", newStr);
 	      int j = checkVar(newStr);
 
 		  
 	      
 	      
 	      if(j!=-1){
-		  $<test.val>$ = varValues[j];
-		  if(strcmp($<test.val>$, safe) == 0) 
-		  {printf("Variable %s used before it is assigned a value. ", $<test.name>1);
-		   yyerror(1);}
-	      $<test.value>$ = atoi(varValues[j]);
-	      $<type>$ = tolower(varTypes[j][0]);
-	      //printf("type of - %c",$<type>$); 
+			$<test.val>$ = varValues[j];
+			if(strcmp($<test.val>$, safe) == 0) 
+			{	printf("Variable %s used before it is assigned a value. ", $<test.name>1);
+				yyerror(1);
+			}
+			$<test.val>$ = strdup(varValues[j]);
+			$<type>$ = tolower(varTypes[j][0]);
+			//printf("type of - %c",$<type>$); 
+		  }else{
+			  $<test.val>$ = "NULL";
 		  }
+		}
     }
 
-indexing: arith_expression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; if($<type>1 != 'i')
-{printf("Array index not integer."); yyerror(1);} else{$<type>$ = $<type>1;}}
+indexing: arith_expression 
+{
+	$<test.val>$ = strdup($<test.val>1); 
+	// printf("asdfsdfs= %s", $<test.val>$);
+	if(strcmp($<test.val>$, "NULL")){
+		if($<type>1 != 'i')
+		{
+			printf("Array index not integer."); 
+			yyerror(1);
+		}else{
+			$<type>$ = $<type>1;
+		}
+	}
+}
 
 /* ifCond: IF conditionals THEN BEG matched END SEMICOLON
     | IF conditionals THEN BEG matched END ELSE BEG 
@@ -549,8 +628,10 @@ forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG src
 
     {	 
             if ($<type>4 != $<type>6) {
+			if(!(strcmp(type_to_string($<type>4), "unknown")==0 || strcmp(type_to_string($<type>6), "unknown")==0)){
            printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
            type_to_string($<type>4), type_to_string($<type>6), yylineno);
+			}
 	} //if the arithops are not of the same type	
 	    int j = checkVar($<test.name>2); 
 	    char *type1 = varTypes[j];

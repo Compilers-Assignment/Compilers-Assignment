@@ -1,16 +1,9 @@
 program ArrayAverage;
 var
   grade : char ;
-  b,c,d,a,g: array [1..10] of Integer ;
-  i,j: Integer;
-  f: Real;
+  b,c,d,a,grade : array [1..10] of Integer ;
+   b: real;
   // the programs starts here
 begin
-  f := 7/2;
-  i := f;
-  g[7/2] := 3;
-  while b[2] > 3 do
-  begin
-  j:=5;
-  end;
+  
 end.
