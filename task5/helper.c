@@ -30,6 +30,7 @@ struct treeNode
     char *terminal;
     treeNode *parent;
     stackLinkedList *children;
+    int isInt;
 };
 
 treeNode *createNode(char *nonTerminal, char *terminal)
@@ -39,6 +40,7 @@ treeNode *createNode(char *nonTerminal, char *terminal)
     node->terminal = terminal;
     node->parent = NULL;
     node->children = NULL;
+    node->isInt = 1;
     return node;
 }
 
@@ -267,7 +269,7 @@ void printSymbolTable(symbolTableNode *table)
 
         if (temp->isArray)
         {
-            for(int i = 0; i < temp->arraySize; i++)
+            for (int i = 0; i < temp->arraySize; i++)
             {
                 printf("%20s[%d]\t\t|", temp->name, i + temp->startIndex);
                 if (temp->type == 'i')
@@ -320,7 +322,7 @@ void printSymbolTable(symbolTableNode *table)
                 }
             }
         }
-        
+
         temp = temp->next;
     }
 }
@@ -646,7 +648,7 @@ void eval_write(treeNode *printableNode)
         {
             if (strcmp(tempPrintable->children->node->nonTerminal, "STRING") == 0)
             {
-                for(int i = 1; i < strlen(tempPrintable->children->node->terminal) - 1; i++)
+                for (int i = 1; i < strlen(tempPrintable->children->node->terminal) - 1; i++)
                 {
                     printf("%c", tempPrintable->children->node->terminal[i]);
                 }
@@ -654,15 +656,13 @@ void eval_write(treeNode *printableNode)
             }
             else
             {
-                float tempFloat = eval_arith_expression(tempPrintable->children->node).floatValue;
-                int tempInt = (int)tempFloat;
-                if(tempFloat - tempInt == 0)
+                if (tempPrintable->children->node->isInt)
                 {
-                    printf("%d ", tempInt);
+                    printf("%d ", eval_arith_expression(tempPrintable->children->node).intValue);
                 }
                 else
                 {
-                    printf("%f ", tempFloat);
+                    printf("%f ", eval_arith_expression(tempPrintable->children->node).floatValue);
                 }
                 break;
             }
@@ -679,15 +679,13 @@ void eval_write(treeNode *printableNode)
             }
             else
             {
-                float tempFloat = eval_arith_expression(tempPrintable->children->node).floatValue;
-                int tempInt = (int)tempFloat;
-                if(tempFloat - tempInt == 0)
+                if (tempPrintable->children->node->isInt)
                 {
-                    printf("%d ", tempInt);
+                    printf("%d ", eval_arith_expression(tempPrintable->children->node).intValue);
                 }
                 else
                 {
-                    printf("%f ", tempFloat);
+                    printf("%f ", eval_arith_expression(tempPrintable->children->node).floatValue);
                 }
                 tempPrintable = tempPrintable->children->next->next->node;
             }
@@ -862,5 +860,42 @@ void eval_src(treeNode *node)
             eval_rule(temp->children->node);
             temp = temp->children->next->node;
         }
+    }
+}
+
+void postOrderMarkInt(treeNode *root)
+{
+    if (root == NULL)
+    {
+        return;
+    }
+
+    if (strcmp(root->nonTerminal, "IDENTIFIER") == 0)
+    {
+        symbolTableNode *temp = searchSymbolTable(symbolTable, root->terminal);
+        if (temp != NULL)
+        {
+            root->isInt = !(temp->type == 'r');
+        }
+    }
+
+    stackLinkedList *temp = root->children;
+    int len = lengthOfStackLinkedList(temp);
+    for (int i = 0; i < len; i++)
+    {
+        postOrderMarkInt(temp->node);
+        temp = temp->next;
+    }
+
+    temp = root->children;
+    len = lengthOfStackLinkedList(temp);
+    for (int i = 0; i < len; i++)
+    {
+        if (temp->node->isInt == 0)
+        {
+            root->isInt = 0;
+            break;
+        }
+        temp = temp->next;
     }
 }

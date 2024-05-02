@@ -46,8 +46,6 @@ body: VAR declList BEG src END PERIOD {
     addChild(node, createNode("PERIOD", "."));
 
     push(parseStack, node);
-
-    eval_src(srcNode);
 }
 
 declList:   {
@@ -736,6 +734,9 @@ void main(int argc, char *argv[]){
     symbolTable = createSymbolTable();
     yyin = fopen(filename, "r");
     yyparse();
+    treeNode *root = pop(parseStack);
+    postOrderMarkInt(root);
+    eval_src(root->children->next->next->next->node->children->next->next->next->node);
     printSymbolTable(symbolTable);
     fclose(yyin);
 }
