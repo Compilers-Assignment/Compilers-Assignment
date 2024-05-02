@@ -440,7 +440,12 @@ cond: arith_expression RELOP arith_expression
         {
             char * arith_2 = pop();
             char * arith_1 = pop();
-            printf("t%d = %s %s %s\n",temp_char++,arith_1,$<string>2,arith_2);
+            char * relop = $<string>2;
+            if (strcmp(relop,"=")==0)
+            {
+                relop = "==";
+            }
+            printf("t%d = %s %s %s\n",temp_char++,arith_1,relop,arith_2);
             char str[5];
             sprintf(str,"t%d",temp_char-1);
             push(str);
