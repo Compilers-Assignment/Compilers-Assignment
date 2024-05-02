@@ -133,6 +133,7 @@ struct symbolTableNode
     char type;
     int isArray;
     int arraySize;
+    int startIndex;
     float floatValue;
     int intValue;
     char charValue;
@@ -153,6 +154,7 @@ symbolTableNode *createSymbolTableNode(char *name, char type)
     node->type = type;
     node->isArray = 0;
     node->arraySize = 0;
+    node->startIndex = 0;
     node->floatValue = 0;
     node->intValue = 0;
     node->charValue = '\0';
@@ -349,7 +351,7 @@ returnValue eval_readable(treeNode *node)
     else
     {
         symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
-        int index = (eval_arith_expression(node->children->next->next->node->children->node)).intValue - 1;
+        int index = (eval_arith_expression(node->children->next->next->node->children->node)).intValue - temp->startIndex;
         if (temp != NULL)
         {
             if (temp->type == 'i')
@@ -597,7 +599,7 @@ void read_readable(treeNode *node)
         symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
         if (temp != NULL)
         {
-            int index = eval_arith_expression(node->children->next->next->node->children->node).intValue - 1;
+            int index = eval_arith_expression(node->children->next->next->node->children->node).intValue - temp->startIndex;
             if (temp->type == 'i')
             {
                 scanf("%d", &temp->intArray[index]);
@@ -684,7 +686,7 @@ void eval_assignment(treeNode *node)
         symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
         treeNode *expressionNode = node->children->next->next->next->next->next->node;
         treeNode *indexNode = node->children->next->next->node;
-        int index = eval_arith_expression(indexNode->children->node).intValue - 1;
+        int index = eval_arith_expression(indexNode->children->node).intValue - temp->startIndex;
 
         if (temp != NULL)
         {

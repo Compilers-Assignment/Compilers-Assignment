@@ -144,6 +144,7 @@ decl: vars COLON type SEMICOLON  {
                     temp->type = tolower(type[0]);
                     temp->isArray = 1;
                     temp->arraySize = atoi($<string>8) - atoi($<string>5) + 1;
+                    temp->startIndex = atoi($<string>5);
                     if (temp->type == 'i')
                     {
                         temp->intArray = (int *)malloc(temp->arraySize * sizeof(int));
