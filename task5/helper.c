@@ -644,12 +644,24 @@ void eval_write(treeNode *printableNode)
         {
             if (strcmp(tempPrintable->children->node->nonTerminal, "STRING") == 0)
             {
-                printf("%s ", tempPrintable->children->node->terminal);
+                for(int i = 1; i < strlen(tempPrintable->children->node->terminal) - 1; i++)
+                {
+                    printf("%c", tempPrintable->children->node->terminal[i]);
+                }
                 break;
             }
             else
             {
-                printf("%d ", eval_arith_expression(tempPrintable->children->node).intValue);
+                float tempFloat = eval_arith_expression(tempPrintable->children->node).floatValue;
+                int tempInt = (int)tempFloat;
+                if(tempFloat - tempInt == 0)
+                {
+                    printf("%d ", tempInt);
+                }
+                else
+                {
+                    printf("%f ", tempFloat);
+                }
                 break;
             }
         }
@@ -657,12 +669,24 @@ void eval_write(treeNode *printableNode)
         {
             if (strcmp(tempPrintable->children->node->nonTerminal, "STRING") == 0)
             {
-                printf("%s ", tempPrintable->children->node->terminal);
+                for (int i = 1; i < strlen(tempPrintable->children->node->terminal) - 1; i++)
+                {
+                    printf("%c", tempPrintable->children->node->terminal[i]);
+                }
                 tempPrintable = tempPrintable->children->next->next->node;
             }
             else
             {
-                printf("%f ", eval_arith_expression(tempPrintable->children->node).floatValue);
+                float tempFloat = eval_arith_expression(tempPrintable->children->node).floatValue;
+                int tempInt = (int)tempFloat;
+                if(tempFloat - tempInt == 0)
+                {
+                    printf("%d ", tempInt);
+                }
+                else
+                {
+                    printf("%f ", tempFloat);
+                }
                 tempPrintable = tempPrintable->children->next->next->node;
             }
         }
