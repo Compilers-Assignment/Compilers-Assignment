@@ -184,7 +184,7 @@ const char* type_to_string(char typeCode) {
 %token PROGRAM INTEGER REAL BOOLEAN CHAR TO DOWNTO IF ELSE VAR WHILE FOR DO ARRAY BEG END READ WRITE THEN AND OR NOT INTLITERAL IDENTIFIER ADDOP MULOP RELOP ASGOP SEMICOLON COLON LBRACKET RBRACKET COMMA LPAREN RPAREN PERIOD STRING OF CHAR_LIT
 
 %union{
-    int integer;    
+      
     char type;     
     struct {
        char *name;
@@ -203,7 +203,7 @@ declList:
         | decl declList
 decl: vars COLON type SEMICOLON 
     | vars COLON ARRAY LBRACKET INTLITERAL PERIOD PERIOD INTLITERAL RBRACKET OF arraytype SEMICOLON 
-    {/*printVariableList();*/ int left = $<integer>5; int right = $<integer>8; /*printf("%d %d", left, right); */ arrayReplacement(left, right); /*printVariableList();*/}
+    {/*printVariableList();*/ int left = $<test.value>5; int right = $<test.value>8; /*printf("%d %d", left, right); */ arrayReplacement(left, right); /*printVariableList();*/}
 
 vars: vars COMMA IDENTIFIER {if(addVariable($<test.name>3) == 0){}}
     | IDENTIFIER            {if(addVariable($<test.name>1) == 0){}}

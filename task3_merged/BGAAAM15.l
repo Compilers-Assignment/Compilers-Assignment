@@ -16,6 +16,7 @@
 %}
 
 %option caseless
+%option yylineno
 
 letter [A-Za-z]
 number [0-9]
@@ -23,7 +24,7 @@ number [0-9]
 %%
 
 \/\/.* {}
-\n {linecount++;}
+\n {linecount++; yylineno = linecount;}
 \".*\" {
     yylval.string = strdup(yytext);
     return STRING;
@@ -32,6 +33,10 @@ number [0-9]
 \'[0-9a-zA-Z]\' {
     // printf("%d %s character literal\n", linecount, strdup(yytext)); 
     yylval.string = strdup(yytext);
+    int tempvar = (int)yytext[1];
+char str2[30];
+sprintf(str2, "%d", tempvar);
+yylval.test.val = strdup(str2);
     return CHAR_LIT;
 }
 
@@ -77,6 +82,11 @@ number [0-9]
     
     // printf("%d %s integer literal\n", linecount, yytext); 
     yylval.string = strdup(yytext);
+    // printf("asdas---------%d, ", atoi(yytext));
+    // yylval.intg = atoi(yytext);
+    
+    yylval.test.value = atoi(yytext);
+    yylval.test.val = strdup(yytext);
     return INTLITERAL;
 }
 
@@ -84,6 +94,7 @@ number [0-9]
 
     // // printf("%d %s identifier\n", linecount, yytext); 
     yylval.string = strdup(yytext);
+    yylval.test.name = strdup(yytext);
     return IDENTIFIER;
 }
 
@@ -150,18 +161,13 @@ number [0-9]
     convertToLower(yytext);
 
     if (strcmp(yytext, ";") == 0) return SEMICOLON;
-    if (strcmp(yytext, ":") == 0) return COLON;
+    if (strcmp(yytext, ":") == 0) {yylval.test.name = strdup(yytext);return COLON;}
     if (strcmp(yytext, "[") == 0) return LBRACKET;
     if (strcmp(yytext, "]") == 0) return RBRACKET;
     if (strcmp(yytext, ",") == 0) return COMMA;
     if (strcmp(yytext, "(") == 0) return LPAREN;
     if (strcmp(yytext, ")") == 0) return RPAREN;
     if (strcmp(yytext, ".") == 0) return PERIOD;
-}
-
-{number}+"."{number}+ {
-    yylval.string = strdup(yytext);
-    return INTLITERAL;
 }
 
 " "* {;}
