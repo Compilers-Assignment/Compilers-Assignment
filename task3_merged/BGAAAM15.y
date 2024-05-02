@@ -556,10 +556,11 @@ readable: IDENTIFIER {
 
         int j = checkVar($<test.name>1); 
         if(j != -1){
-            $<test.val>$ = strdup(varValues[j]); 
+            $<test.val>$ = strdup(varValues[j]);
+            char *type = varTypes[j] ;
             if(strcmp($<test.val>$, safe) == 0) 
             {
-                if($<type>1 != 'i' && $<type>1 != 'b' && $<type>1 != 'r'){
+                if((strcmp(type, "int")) && strcmp(type, "real") && strcmp(type, "bool") && strcmp(type, "char")){
                     // printf("%c ", $<type>1);
                     printf("Array identifier used without indexing - %s. ", $<test.name>1);
                     yyerror(1);
@@ -792,9 +793,11 @@ arith_expression: arith_expression ADDOP tExpression {
         }
         else if ($<type>1 != $<type>3)
         {
+            flag = 1;
+            // printf("%c -- %c", $<type>1, $<type>3);
             if (!(strcmp(type_to_string($<type>1), "unknown") == 0 || strcmp(type_to_string($<type>3), "unknown") == 0))
             {
-                flag = 1;
+                
                 printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", type_to_string($<type>1), type_to_string($<type>3), yylineno);
             }
         }
@@ -1457,35 +1460,8 @@ ifCond: IF conditionals THEN BEG src END SEMICOLON {
         push(parseStack, node);
     }
 
-forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG src END SEMICOLON {
-    treeNode *srcNode = pop(parseStack);
-    treeNode *rangeNode = pop(parseStack);
-    treeNode *arithExpressionNode2 = pop(parseStack);
-    treeNode *arithExpressionNode1 = pop(parseStack);
-
-    treeNode *node = createNode("forLoop", NULL);
-
-    addChild(node, createNode("FOR", "FOR"));
-    addChild(node, createNode("IDENTIFIER", $<string>2));
-    addChild(node, createNode("ASGOP", ":="));
-    addChild(node, arithExpressionNode1);
-    addChild(node, rangeNode);
-    addChild(node, arithExpressionNode2);
-    addChild(node, createNode("DO", "DO"));
-    addChild(node, createNode("BEG", "BEGIN"));
-    addChild(node, srcNode);
-    addChild(node, createNode("END", "END"));
-    addChild(node, createNode("SEMICOLON", ";"));
-
-    push(parseStack, node);
-
-    // if ($<type>4 != $<type>6) {
-	// 	if(!(strcmp(type_to_string($<type>4), "unknown")==0 || strcmp(type_to_string($<type>6), "unknown")==0)){
-    //         printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
-    //         type_to_string($<type>4), type_to_string($<type>6), yylineno);
-	// 	}
-	// } //if the arithops are not of the same type	
-	int j = checkVar($<test.name>2); 
+forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression{
+    int j = checkVar($<test.name>2); 
     if(j != -1){
         char *type1 = varTypes[j];
         if(strcmp(type1, "int") == 0){
@@ -1522,6 +1498,35 @@ forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG src
             
         }
     }
+} DO BEG src END SEMICOLON {
+    treeNode *srcNode = pop(parseStack);
+    treeNode *rangeNode = pop(parseStack);
+    treeNode *arithExpressionNode2 = pop(parseStack);
+    treeNode *arithExpressionNode1 = pop(parseStack);
+
+    treeNode *node = createNode("forLoop", NULL);
+
+    addChild(node, createNode("FOR", "FOR"));
+    addChild(node, createNode("IDENTIFIER", $<string>2));
+    addChild(node, createNode("ASGOP", ":="));
+    addChild(node, arithExpressionNode1);
+    addChild(node, rangeNode);
+    addChild(node, arithExpressionNode2);
+    addChild(node, createNode("DO", "DO"));
+    addChild(node, createNode("BEG", "BEGIN"));
+    addChild(node, srcNode);
+    addChild(node, createNode("END", "END"));
+    addChild(node, createNode("SEMICOLON", ";"));
+
+    push(parseStack, node);
+
+    // if ($<type>4 != $<type>6) {
+	// 	if(!(strcmp(type_to_string($<type>4), "unknown")==0 || strcmp(type_to_string($<type>6), "unknown")==0)){
+    //         printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
+    //         type_to_string($<type>4), type_to_string($<type>6), yylineno);
+	// 	}
+	// } //if the arithops are not of the same type	
+	
 }
 
 whileLoop: WHILE conditionals DO BEG src END SEMICOLON {
