@@ -606,6 +606,7 @@ void read_readable(treeNode *node)
             {
                 scanf("%f", &temp->floatValue);
             }
+            temp->initialized = 1;
         }
     }
     else
@@ -631,6 +632,7 @@ void read_readable(treeNode *node)
             {
                 scanf("%f", &temp->floatArray[index]);
             }
+            temp->initializedArray[index] = 1;
         }
     }
 }

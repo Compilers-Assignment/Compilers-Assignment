@@ -730,11 +730,11 @@ void printTree(treeNode *root){
     printf("]");
 }
 
-void main(){
-    /* freopen("log.txt", "w", stdout); */
+void main(int argc, char *argv[]){
+    char *filename = argv[1];
     parseStack = createStack();
     symbolTable = createSymbolTable();
-    yyin = fopen("sample.txt", "r");
+    yyin = fopen(filename, "r");
     yyparse();
     printSymbolTable(symbolTable);
     fclose(yyin);
