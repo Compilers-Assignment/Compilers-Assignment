@@ -239,7 +239,7 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 
 expression: arith_expression 
     | bool_exp
-
+    
 arith_expression: arith_expression ADDOP tExpression 
     {
     // printf("arith_expression\n");
@@ -438,7 +438,7 @@ factor: cond
         push($<string>1);
     }
 
-printable: STRING 
+printable: STRING
     | printable COMMA readable 
     | printable COMMA STRING 
     | arith_expression {pop();}
@@ -480,7 +480,31 @@ cond: arith_expression RELOP arith_expression
 src: 
     | rule src
 rule: WRITE LPAREN printable RPAREN SEMICOLON
+    {
+        if (if_count == -1)
+        {
+            printf("//Write statement here\n");
+        }
+        else
+        {
+            char str[50];
+            sprintf(str,"//Write statement here\n");
+            push_if(str);
+        }
+    }
     | READ LPAREN readable RPAREN SEMICOLON
+    {
+        if (if_count == -1)
+        {
+            printf("//Read statement here\n");
+        }
+        else
+        {
+            char str[50];
+            sprintf(str,"//Read statement here\n");
+            push_if(str);
+        }
+    }
     |{ if_count++; in_cond = 1;} ifCond
     | forLoop
     | whileLoop
@@ -679,10 +703,18 @@ conditionals: bool_exp {if(in_cond==1) in_cond = 0;}
 
 %%
 
-void main(){
-    yyin = fopen("sample.txt", "r");
+int main(int argc, char *argv[]){
+    char* filename;
+
+    filename=argv[1];
+
+    printf("\n");
+
+    yyin=fopen(filename, "r");
+
     yyparse();
-    fclose(yyin);
+
+    return 0;
 }
 
 void yyerror(char *s){
