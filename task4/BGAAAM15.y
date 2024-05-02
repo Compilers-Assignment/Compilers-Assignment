@@ -17,7 +17,7 @@
     int variable_count = 0;
     int no_of_variables = 0;
     int for_stack_count = -1;
-    char  for_stack[100][200];
+    char  for_stack[100][1000];
     void push_for(char *c)
     {
         strcpy(for_stack[++for_stack_count],c);
@@ -161,11 +161,11 @@ decl: vars COLON type SEMICOLON
         char * type = $<string>11;
         if (strcmp(type,"integer")==0)
         {
-            updateTypes("integer",4,no_of_variables);
+            updateTypes("integer",2,no_of_variables);
         }
         else if (strcmp(type,"real")==0)
         {
-            updateTypes("real",8,no_of_variables);
+            updateTypes("real",4,no_of_variables);
         }
         else if (strcmp(type,"char")==0)
         {
