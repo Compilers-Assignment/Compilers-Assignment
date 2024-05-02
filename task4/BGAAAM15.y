@@ -39,9 +39,9 @@
     struct quadruple
     {
         char operator[5];
-        char operand1[10];
-        char operand2[10];
-        char result[10];
+        char operand1[100];
+        char operand2[100];
+        char result[100];
     } quad[25];
     char if_stack[100][100];
     struct variable
@@ -78,7 +78,7 @@
     }
     struct stack
     {
-        char c[10];
+        char c[100];
     } stk[25];
     void addQuadruple(char op1[], char op[], char op2[], char result[])
     {
@@ -123,12 +123,10 @@
     }
     void push(char *c)
     {
-        // printf("Pushing this %s\n",c);
         strcpy(stk[++tos].c, c);
     }
     char *pop()
     {
-        // printf("Popping this %s\n",stk[tos].c);
         char *c = stk[tos].c;
         tos = tos - 1;
         // printf("%s\n",c);
