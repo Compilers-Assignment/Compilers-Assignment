@@ -355,15 +355,17 @@ expression: arith_expression {
  | bool_exp {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
 
 arith_expression: arith_expression ADDOP tExpression {
+	int flag=0;
 	if(($<type>1 == 'i' && $<type>3 == 'r') || ($<type>1 == 'r' && $<type>3 == 'i')){
 		
 	}else if ($<type>1 != $<type>3) {
 		if(!(strcmp(type_to_string($<type>1), "unknown")==0 || strcmp(type_to_string($<type>3), "unknown")==0)){
     printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
-           type_to_string($<type>1), type_to_string($<type>3), yylineno);}
+           type_to_string($<type>1), type_to_string($<type>3), yylineno);
+		   flag=1;}
 	}
- 	$<test.value>$ = $<test.value>1 + $<test.value>3; 
 	// $<type>$ = $<type>3;
+	if(flag == 0){
 	if($<type>1 != $<type>3){
 		$<type>$ = 'r';
 	}else{
@@ -400,22 +402,25 @@ arith_expression: arith_expression ADDOP tExpression {
 	// sprintf(tempchar, "%d", tempint);
 	$<test.val>$ = strdup(tempchar);
 	// $<test.value>$ = $<test.value>1 + $<test.value>3;
- } 
+ } }
 
 
     | tExpression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
 
 tExpression: tExpression MULOP fExpression {
+	int flag=0;
 	if(($<type>1 == 'i' && $<type>3 == 'r') || ($<type>1 == 'r' && $<type>3 == 'i')){
 		
 	}else if ($<type>1 != $<type>3) {
 		if(!(strcmp(type_to_string($<type>1), "unknown")==0 || strcmp(type_to_string($<type>3), "unknown")==0)){
     	printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
-        type_to_string($<type>1), type_to_string($<type>3), yylineno);}
+        type_to_string($<type>1), type_to_string($<type>3), yylineno);
+		flag=1;}
 	}
 	//int tempint = atoi($<test.val>1) * atoi($<test.val>3);
 	//char tempchar[25];
 	//sprintf(tempchar, "%d", tempint);
+	if(flag==0){
 	if($<type>1 != $<type>3){
 		$<type>$ = 'r';
 		
@@ -471,7 +476,7 @@ tExpression: tExpression MULOP fExpression {
 	
 	$<test.val>$ = strdup(tempchar);
 	//$<test.value>$ = $<test.value>1 * $<test.value>3;
-} 
+} }
     | fExpression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1; }
     
 fExpression: LPAREN arith_expression RPAREN {$<test.val>$ = strdup($<test.val>2); $<test.value>$ = $<test.value>2; $<type>$ = $<type>2;}
@@ -707,43 +712,41 @@ ifCond: IF conditionals THEN BEG src END SEMICOLON
 forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG src END SEMICOLON
 
     {	 
-            if ($<type>4 != $<type>6) {
-			if(!(strcmp(type_to_string($<type>4), "unknown")==0 || strcmp(type_to_string($<type>6), "unknown")==0)){
-           printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
-           type_to_string($<type>4), type_to_string($<type>6), yylineno);
-			}
-	} //if the arithops are not of the same type	
-	    int j = checkVar($<test.name>2); 
-	    char *type1 = varTypes[j];
-	 
-	    char *type2;
-	    switch ($<type>4) {
-		case 'i':
-		    type2 = "int";
-		    break;
-		case 'c':
-		    type2 = "char";
-		    break;
-		case 'r':
-		    type2 = "real";
-		    break;
-		case 'b':
-		    type2 = "bool";
-		    break;
-		default:
-		    type2 = "unknown";
-		    printf("Error: Unknown type '%c'\n", $<type>4);
-		    
-		    break;
-	    }
-
-	    printf("Type of the variable is %s\n", type1);
-	    printf("Type of the RHS is %s\n", type2);
-	    
-	    if (strcmp(type1, type2) != 0) {
-		printf("Type mismatch. Attempted to assign %s to %s. ", type2, type1);
-		
-	    }
+            int j = checkVar($<test.name>2); 
+    if(j != -1){
+        char *type1 = varTypes[j];
+        if($<type>2 == 'i'){
+            //char *type2;
+            // switch ($<type>4) {
+            //     case 'i':
+            //         type2 = "int";
+            //         break;
+            //     case 'c':
+            //         type2 = "char";
+            //         break;
+            //     case 'r':
+            //         type2 = "real";
+            //         break;
+            //     case 'b':
+            //         type2 = "bool";
+            //         break;
+            //     default:
+            //         type2 = "unknown";
+            //         printf("Error: Unknown type '%c'\n", $<type>4);
+                    
+            //         break;
+            // }
+            // if (strcmp(type1, type2) != 0) {
+            //     printf("Type mismatch. Attempted to assign %s to %s. ", type2, type1);
+            // }
+            if($<type>4 != 'i' || $<type>6 != 'i')
+                printf("Loop range values must be integer type. ");
+                yyerror(1);
+        }else{
+            printf("Loop variable must be integer type. ");
+            yyerror(1);
+        }
+    }
 	}
     
 whileLoop: WHILE conditionals DO BEG src END SEMICOLON
@@ -765,7 +768,7 @@ void main(){
 void yyerror(int code) {
     if (code != 1) {
         printf("syntax error\n");
-        printf("line number %d", yylineno);
+        printf("line number %d. \n", yylineno);
     }
     else{
 
