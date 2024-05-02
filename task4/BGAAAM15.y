@@ -534,7 +534,10 @@ ifCond: IF conditionals THEN BEG src END SEMICOLON
             char * condition = pop();
             char * matched = pop_if();
             sprintf(str,"if %s==0 goto L%d\n%sgoto L%d\nL%d:\n",condition,label_count,matched,label_count+1,label_count);
+            if_count--;
             push_if(str);
+            if_count++;
+            clear_if();
             push_label(label_count+1);
             label_count += 2;
         }
