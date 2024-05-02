@@ -327,7 +327,13 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 	    
 }
 
-expression: arith_expression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}| bool_exp {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
+expression: arith_expression {
+	$<test.val>$ = strdup($<test.val>1);
+	// $<test.value>$ = $<test.value>1; 
+	// printf("%s  , ", $<test.val>$);
+	$<type>$ = $<type>1;
+ }
+ | bool_exp {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
 
 arith_expression: arith_expression ADDOP tExpression {
 	if(($<type>1 == 'i' && $<type>3 == 'r') || ($<type>1 == 'r' && $<type>3 == 'i')){
@@ -343,11 +349,28 @@ arith_expression: arith_expression ADDOP tExpression {
 	}else{
 		$<type>$ = $<type>3;
 	}
-	int tempint = atoi($<test.val>1) + atoi($<test.val>3);
+	// int tempint = atoi($<test.val>1) + atoi($<test.val>3);
 	char tempchar[25];
-	sprintf(tempchar, "%d", tempint);
+	if($<type>$ == 'r'){
+		float tempval;
+		if(!strcmp($<string>2, "+")){
+			tempval = atof($<test.val>1) + atof($<test.val>3);
+		}else if(!strcmp($<string>2, "-")){
+			tempval = atof($<test.val>1) - atof($<test.val>3);
+		}
+		sprintf(tempchar, "%f", tempval);
+	}else{
+		int tempval;
+		if(!strcmp($<string>2, "+")){
+			tempval = atoi($<test.val>1) + atoi($<test.val>3);
+		}else if(!strcmp($<string>2, "-")){
+			tempval = atoi($<test.val>1) - atoi($<test.val>3);
+		}
+		sprintf(tempchar, "%d", tempval);
+	}
+	// sprintf(tempchar, "%d", tempint);
 	$<test.val>$ = strdup(tempchar);
-	$<test.value>$ = $<test.value>1 + $<test.value>3;
+	// $<test.value>$ = $<test.value>1 + $<test.value>3;
  } 
 
 
