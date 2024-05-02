@@ -473,8 +473,8 @@ returnValue eval_arith_expression(treeNode *node)
 
 returnValue eval_cond(treeNode *node)
 {
-    int left = eval_arith_expression(node->children->node).floatValue;
-    int right = eval_arith_expression(node->children->next->next->node).floatValue;
+    float left = eval_arith_expression(node->children->node).floatValue;
+    float right = eval_arith_expression(node->children->next->next->node).floatValue;
 
     if (strcmp(node->children->next->node->terminal, "=") == 0)
     {
