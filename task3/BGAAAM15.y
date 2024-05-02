@@ -496,21 +496,101 @@ term: factor {$<type>$ = $<type>1;}
            type_to_string($<type>1), type_to_string($<type>3), yylineno);}
 } $<type>$ = $<type>3;} //CHANGE
     
-factor: cond {$<type>$ = $<type>1;}
-    | NOT factor {$<type>$ = $<type>2;}
-    | LPAREN bool_exp RPAREN {$<type>$ = $<type>2;}
-    | IDENTIFIER {int j = checkVar($<test.name>1); $<type>$ = tolower(varTypes[j][0]);}
+factor: cond {$<type>$ = $<type>1; $<test.val>$ = strdup($<test.val>1);}
+    | NOT factor {$<type>$ = $<type>2; 
+	    if(strcmp($<test.val>2, "1") == 0){
+			$<test.val>$ = strdup("0");
+		}
+		else{
+			$<test.val>$ = strdup("1");
+		}
+	}
+    | LPAREN bool_exp RPAREN {$<type>$ = $<type>2; $<test.val>$ = strdup($<test.val>2);}
+    | IDENTIFIER {int j = checkVar($<test.name>1); 
+	if(j!=-1){
+	if(tolower(varTypes[j][0]) == 'b'){
+		$<type>$ = tolower(varTypes[j][0]);
+	    $<test.val>$ = strdup($<test.val>1);
+					}				
+	else{
+		printf("Non-boolean value assigned to boolean expression. ");
+		yyerror(1);
+	}
+			}		}
 
 printable: STRING | printable COMMA readable | printable COMMA STRING | arith_expression
 
 range: TO | DOWNTO
 
-cond: arith_expression RELOP arith_expression {if ($<type>1 != $<type>3) {
-	if(!(strcmp(type_to_string($<type>1), "unknown")==0 || strcmp(type_to_string($<type>3), "unknown")==0)){
+cond: arith_expression RELOP arith_expression {
+	if ($<type>1 != $<type>3) {
+		if(($<type>1 == 'r' && $<type>3 == 'i') || ($<type>3 == 'r' && $<type>1 == 'i')){
+			
+		}
+		else if(!(strcmp(type_to_string($<type>1), "unknown")==0 || strcmp(type_to_string($<type>3), "unknown")==0)){
     printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
            type_to_string($<type>1), type_to_string($<type>3), yylineno);}
+
+	if(strcmp($<test.val>1, "NULL") && strcmp($<test.val>1, "NULL")){
+		if(strcmp($<string>2, "=")){
+			if(strcmp($<test.val>1, $<test.val>3) == 0){
+				$<test.val>$ = strdup("1");
+			}
+			else{
+				$<test.val>$ = strdup("0");
+			}
+		}
+
+	    if(strcmp($<string>2, "<>")){
+			if(strcmp($<test.val>1, $<test.val>3) != 0){
+				$<test.val>$ = strdup("1");
+			}
+			else{
+				$<test.val>$ = strdup("0");
+			}
+		}
+
+	    if(strcmp($<string>2, "<")){
+			if(atof($<test.val>1) < atof($<test.val>3)){
+				$<test.val>$ = strdup("1");
+			}
+			else{
+				$<test.val>$ = strdup("0");
+			}
+		}
+
+	    if(strcmp($<string>2, ">")){
+			if(atof($<test.val>1) > atof($<test.val>3)){
+				$<test.val>$ = strdup("1");
+			}
+			else{
+				$<test.val>$ = strdup("0");
+			}
+		}
+
+	    if(strcmp($<string>2, "<=")){
+			if(atof($<test.val>1) <= atof($<test.val>3)){
+				$<test.val>$ = strdup("1");
+			}
+			else{
+				$<test.val>$ = strdup("0");
+			}
+		}
+
+		if(strcmp($<string>2, ">=")){
+			if(atof($<test.val>1) >= atof($<test.val>3)){
+				$<test.val>$ = strdup("1");
+			}
+			else{
+				$<test.val>$ = strdup("0");
+			}
+		}
+
+
+
+	}
 } 
-$<type>$ = $<type>3;}
+$<type>$ = 'b';}
 
 
 /* srcWithIf: 
