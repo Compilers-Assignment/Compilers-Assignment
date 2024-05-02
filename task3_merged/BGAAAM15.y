@@ -547,6 +547,70 @@ arraytype: INTEGER {
         addVarType("achar");
     }
 
+readable: IDENTIFIER {
+        treeNode *node = createNode("readable", NULL);
+
+        addChild(node, createNode("IDENTIFIER", $<string>1));
+
+        push(parseStack, node);
+
+        int j = checkVar($<test.name>1); 
+        if(j != -1){
+            $<test.val>$ = strdup(varValues[j]); 
+            if(strcmp($<test.val>$, safe) == 0) 
+            {
+                if($<type>1 != 'i' && $<type>1 != 'b' && $<type>1 != 'r'){
+                    // printf("%c ", $<type>1);
+                    printf("Array identifier used without indexing - %s. ", $<test.name>1);
+                    yyerror(1);
+                }
+                else{
+                    printf("Variable %s used before it is assigned a value. ", $<test.name>1); 
+                    yyerror(1);
+                }
+            }else{
+                $<test.val>$ = strdup(varValues[j]); 
+                $<type>$ = tolower(varTypes[j][0]);
+            }
+        }else{
+            $<test.val>$ = "NULL";
+        }
+    }
+
+    | IDENTIFIER LBRACKET indexing RBRACKET {
+        treeNode *indexingNode = pop(parseStack);
+
+        treeNode *node = createNode("readable", NULL);
+
+        addChild(node, createNode("IDENTIFIER", $<string>1));
+        addChild(node, createNode("LBRACKET", "["));
+        addChild(node, indexingNode);
+        addChild(node, createNode("RBRACKET", "]"));
+
+        push(parseStack, node);
+
+        char *str = strcat($<test.name>1, "[");
+	    char *str2 = strdup($<test.val>3);
+		if(strcmp(str2,"NULL")){
+            char *str3 = strcat(str2, "]");
+            char *newStr = strcat(str, str3);
+            int j = checkVar(newStr);
+
+            if(j!=-1){
+                $<test.val>$ = varValues[j];
+                if(strcmp($<test.val>$, safe) == 0) 
+                {
+                    printf("Variable %s used before it is assigned a value. ", $<test.name>1);
+                    yyerror(1);
+                }
+                $<test.val>$ = strdup(varValues[j]);
+                $<type>$ = tolower(varTypes[j][0]);
+            }else{
+                $<test.val>$ = "NULL";
+            }
+		}
+    }
+
 assignment: IDENTIFIER ASGOP expression SEMICOLON {
     treeNode *expressionNode = pop(parseStack);
 
@@ -1332,68 +1396,7 @@ rule: WRITE LPAREN printable RPAREN SEMICOLON {
         push(parseStack, node);
     }
 
-readable: IDENTIFIER {
-        treeNode *node = createNode("readable", NULL);
 
-        addChild(node, createNode("IDENTIFIER", $<string>1));
-
-        push(parseStack, node);
-
-        int j = checkVar($<test.name>1); 
-        if(j != -1){
-            $<test.val>$ = strdup(varValues[j]); 
-            if(strcmp($<test.val>$, safe) == 0) 
-            {
-                if($<type>1 != 'i' && $<type>1 != 'b' && $<type>1 != 'r'){
-                    printf("Array identifier used without indexing - %s. ", $<test.name>1);
-                    yyerror(1);
-                }
-                else{
-                    printf("Variable %s used before it is assigned a value. ", $<test.name>1); 
-                    yyerror(1);
-                }
-            }else{
-                $<test.val>$ = strdup(varValues[j]); 
-                $<type>$ = tolower(varTypes[j][0]);
-            }
-        }else{
-            $<test.val>$ = "NULL";
-        }
-    }
-
-    | IDENTIFIER LBRACKET indexing RBRACKET {
-        treeNode *indexingNode = pop(parseStack);
-
-        treeNode *node = createNode("readable", NULL);
-
-        addChild(node, createNode("IDENTIFIER", $<string>1));
-        addChild(node, createNode("LBRACKET", "["));
-        addChild(node, indexingNode);
-        addChild(node, createNode("RBRACKET", "]"));
-
-        push(parseStack, node);
-
-        char *str = strcat($<test.name>1, "[");
-	    char *str2 = strdup($<test.val>3);
-		if(strcmp(str2,"NULL")){
-            char *str3 = strcat(str2, "]");
-            char *newStr = strcat(str, str3);
-            int j = checkVar(newStr);
-
-            if(j!=-1){
-                $<test.val>$ = varValues[j];
-                if(strcmp($<test.val>$, safe) == 0) 
-                {
-                    printf("Variable %s used before it is assigned a value. ", $<test.name>1);
-                    yyerror(1);
-                }
-                $<test.val>$ = strdup(varValues[j]);
-                $<type>$ = tolower(varTypes[j][0]);
-            }else{
-                $<test.val>$ = "NULL";
-            }
-		}
-    }
 
 indexing: arith_expression {
         treeNode *arithExpressionNode = pop(parseStack);
@@ -1485,7 +1488,7 @@ forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG src
 	int j = checkVar($<test.name>2); 
     if(j != -1){
         char *type1 = varTypes[j];
-        if($<type>2 == 'i'){
+        if(strcmp(type1, "int") == 0){
             //char *type2;
             // switch ($<type>4) {
             //     case 'i':
@@ -1510,11 +1513,13 @@ forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG src
             //     printf("Type mismatch. Attempted to assign %s to %s. ", type2, type1);
             // }
             if($<type>4 != 'i' || $<type>6 != 'i')
-                printf("Loop range values must be integer type. ");
-                yyerror(1);
+                printf("Loop range values must be integer type. Line number %d.\n", yylineno);
+                
         }else{
-            printf("Loop variable must be integer type. ");
-            yyerror(1);
+                        // printf("sadfdsfdsf%c, ", $<type>2);
+
+            printf("Loop variable must be integer type. Line number %d.\n", yylineno);
+            
         }
     }
 }
@@ -1576,12 +1581,24 @@ void yyerror(int code) {
     //exit(1);
 }
 
-void main(){
+/* void main(){
     freopen("log.txt", "w", stdout);
     parseStack = createStack();
     yyin = fopen("sample.txt", "r");
     yyparse();
     /* printf("valid input\n"); */
-    printTree(parseStack->top->node);
+    /* printTree(parseStack->top->node);
     fclose(yyin);
+} */ 
+
+int main(int argc, char *argv[]){
+    char* filename;
+    filename=argv[1];
+    printf("\n");
+    parseStack = createStack();
+    yyin=fopen(filename, "r");
+    yyparse();
+    printVariableList();
+    /* printTree(parseStack->top->node); */
+    return 0;
 }
