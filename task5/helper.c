@@ -424,15 +424,15 @@ returnValue eval_tExpression(treeNode *node)
     {
         if (strcmp(node->children->next->node->terminal, "*") == 0)
         {
-            return (returnValue){.intValue = (int)(eval_tExpression(node->children->node).floatValue *
-                                                   eval_fExpression(node->children->next->next->node).floatValue),
+            return (returnValue){.intValue = (int)(eval_tExpression(node->children->node).intValue *
+                                                   eval_fExpression(node->children->next->next->node).intValue),
                                  .floatValue = eval_tExpression(node->children->node).floatValue *
                                                eval_fExpression(node->children->next->next->node).floatValue};
         }
         if (strcmp(node->children->next->node->terminal, "/") == 0)
         {
-            return (returnValue){.intValue = (int)(eval_tExpression(node->children->node).floatValue /
-                                                   eval_fExpression(node->children->next->next->node).floatValue),
+            return (returnValue){.intValue = (int)(eval_tExpression(node->children->node).intValue /
+                                                   eval_fExpression(node->children->next->next->node).intValue),
                                  .floatValue = eval_tExpression(node->children->node).floatValue /
                                                eval_fExpression(node->children->next->next->node).floatValue};
         }
@@ -457,15 +457,15 @@ returnValue eval_arith_expression(treeNode *node)
         if (strcmp(node->children->next->node->terminal, "+") == 0)
         {
             // return eval_arith_expression(node->children->node) + eval_tExpression(node->children->next->next->node);
-            return (returnValue){.intValue = (int)(eval_arith_expression(node->children->node).floatValue +
-                                                   eval_tExpression(node->children->next->next->node).floatValue),
+            return (returnValue){.intValue = (int)(eval_arith_expression(node->children->node).intValue +
+                                                   eval_tExpression(node->children->next->next->node).intValue),
                                  .floatValue = eval_arith_expression(node->children->node).floatValue +
                                                eval_tExpression(node->children->next->next->node).floatValue};
         }
         if (strcmp(node->children->next->node->terminal, "-") == 0)
         {
-            return (returnValue){.intValue = (int)(eval_arith_expression(node->children->node).floatValue -
-                                                   eval_tExpression(node->children->next->next->node).floatValue),
+            return (returnValue){.intValue = (int)(eval_arith_expression(node->children->node).intValue -
+                                                   eval_tExpression(node->children->next->next->node).intValue),
                                  .floatValue = eval_arith_expression(node->children->node).floatValue -
                                                eval_tExpression(node->children->next->next->node).floatValue};
         }
@@ -649,7 +649,7 @@ void eval_write(treeNode *printableNode)
             }
             else
             {
-                printf("%f ", eval_arith_expression(tempPrintable->children->node).floatValue);
+                printf("%d ", eval_arith_expression(tempPrintable->children->node).intValue);
                 break;
             }
         }
