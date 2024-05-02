@@ -557,6 +557,10 @@ void read_readable(treeNode *node)
             {
                 scanf("%d", &temp->boolValue);
             }
+            else if (temp->type == 'r')
+            {
+                scanf("%f", &temp->floatValue);
+            }
         }
     }
     else
@@ -576,6 +580,10 @@ void read_readable(treeNode *node)
             else if (temp->type == 'b')
             {
                 scanf("%d", &temp->boolArray[index]);
+            }
+            else if (temp->type == 'r')
+            {
+                scanf("%f", &temp->floatArray[index]);
             }
         }
     }
