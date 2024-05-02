@@ -5,6 +5,7 @@
     int yylex();
     extern FILE *yyin;
     int temp_ctr = 0;
+    int in_cond = 0;
     void yyerror();
     int count = 0;
     int qind = 0;
@@ -15,6 +16,17 @@
     int label_stack_count = -1;
     int variable_count = 0;
     int no_of_variables = 0;
+    int for_stack_count = -1;
+    char  for_stack[100][200];
+    void push_for(char *c)
+    {
+        strcpy(for_stack[++for_stack_count],c);
+    }
+    char * pop_for()
+    {
+
+        return for_stack[for_stack_count--];
+    }
     int label_stack[100];
     void push_label(int label)
     {
@@ -268,7 +280,7 @@ fExpression: LPAREN arith_expression RPAREN
     }
     | IDENTIFIER LBRACKET indexing RBRACKET
     {
-        if (if_count==-1)
+        if (if_count==-1 || (if_count==0 && in_cond==1))
         {
             char * index = pop();
             char * variable = $<string>1;
@@ -286,7 +298,6 @@ fExpression: LPAREN arith_expression RPAREN
             char * variable = $<string>1;
             int size = findSize(variable);
             char str_2[50];
-            printf("This is getting pushed t%d=%s*%d and t%d=&%s+t%d\n",temp_char,index,size,temp_char+1,variable,temp_char);
             sprintf(str_2,"t%d=%s*%d\nt%d=&%s+t%d\n",temp_char,index,size,temp_char+1,variable,temp_char);
             push_if(str_2);     
             char str[5];
@@ -307,48 +318,91 @@ fExpression: LPAREN arith_expression RPAREN
 bool_exp: term
     | bool_exp OR term
     {
-        char * t0 = pop();
-        char * t1 = pop();
-        int new_temp = temp_char++;
-        printf("t%d=1\n",new_temp);
-        printf("if %s==1 goto L%d\n",t0,label_count);
-        printf("if %s==1 goto L%d\n",t1,label_count);
-        printf("t%d=0\n",new_temp);
-        printf("L%d:",label_count++);
-        char str[5];
-        sprintf(str,"t%d",new_temp);
-        push(str);
+        if (if_count == -1 || (if_count==0 && in_cond==1))
+        {
+            char * t0 = pop();
+            char * t1 = pop();
+            int new_temp = temp_char++;
+            printf("t%d=1\n",new_temp);
+            printf("if %s==1 goto L%d\n",t0,label_count);
+            printf("if %s==1 goto L%d\n",t1,label_count);
+            printf("t%d=0\n",new_temp);
+            printf("L%d:",label_count++);
+            char str[5];
+            sprintf(str,"t%d",new_temp);
+            push(str);
+        }
+        else
+        {
+            char * t0 = pop();
+            char * t1 = pop();
+            int new_temp = temp_char++;
+            char str[100];
+            sprintf(str,"t%d=1\nif %s==1 goto L%d\nif %s==1 goto L%d\nt%d=0\nL%d:",new_temp,t0,label_count,t1,label_count,new_temp,label_count++);
+            push_if(str);
+            char str_2[5];
+            sprintf(str_2,"t%d",new_temp);
+            push(str_2);
+        }
     }
 
 term: factor
     | term AND factor
     {
-        char * t0 = pop();
-        char * t1 = pop();
-        int new_temp = temp_char++;
-        printf("t%d=0\n",new_temp);
-        printf("if %s==0 goto L%d\n",t0,label_count);
-        printf("if %s==0 goto L%d\n",t1,label_count);
-        printf("t%d=1\n",new_temp);
-        printf("L%d:",label_count++);
-        char str[5];
-        sprintf(str,"t%d",new_temp);
-        push(str);
+        if (if_count == -1 || (if_count==0 && in_cond==1))
+        {
+            char * t0 = pop();
+            char * t1 = pop();
+            int new_temp = temp_char++;
+            printf("t%d=0\n",new_temp);
+            printf("if %s==0 goto L%d\n",t0,label_count);
+            printf("if %s==0 goto L%d\n",t1,label_count);
+            printf("t%d=1\n",new_temp);
+            printf("L%d:",label_count++);
+            char str[5];
+            sprintf(str,"t%d",new_temp);
+            push(str);
+        }
+        else
+        {
+            char * t0 = pop();
+            char * t1 = pop();
+            int new_temp = temp_char++;
+            char str[100];
+            sprintf(str,"t%d=0\nif %s==0 goto L%d\nif %s==0 goto L%d\nt%d=1\nL%d:",new_temp,t0,label_count,t1,label_count,new_temp,label_count++);
+            push_if(str);
+            char str_2[5];
+            sprintf(str_2,"t%d",new_temp);
+            push(str_2);
+        }
     }
 
 factor: cond
     | NOT factor
     {
-        char *t0 = pop();
-        int new_temp = temp_char++;
-        printf("t%d=1\n",new_temp);
-        printf("if %s==1 goto L%d\n",t0,label_count);
-        printf("t%d=0\n",new_temp);
-        printf("L%d:",label_count++);
-        char str[5];
-        sprintf(str,"t%d",new_temp);
-        push(str);
-        label_count++;
+        if (if_count == -1 || (if_count==0 && in_cond==1))
+        {
+            char *t0 = pop();
+            int new_temp = temp_char++;
+            printf("t%d=1\n",new_temp);
+            printf("if %s==1 goto L%d\n",t0,label_count);
+            printf("t%d=0\n",new_temp);
+            printf("L%d:",label_count++);
+            char str[5];
+            sprintf(str,"t%d",new_temp);
+            push(str);
+        }
+        else
+        {
+            char *t0 = pop();
+            int new_temp = temp_char++;
+            char str[100];
+            sprintf(str,"t%d=1\nif %s==1 goto L%d\nt%d=0\nL%d:",new_temp,t0,label_count,new_temp,label_count++);
+            push_if(str);
+            char str_2[5];
+            sprintf(str_2,"t%d",new_temp);
+            push(str_2);
+        }
     }
     | LPAREN bool_exp RPAREN 
     | IDENTIFIER
@@ -366,30 +420,33 @@ range: TO
 
 cond: arith_expression RELOP arith_expression
     {
-        char * arith_2 = pop();
-        char * arith_1 = pop();
-        printf("t%d=%s%s%s\n",temp_char++,arith_1,$<string>2,arith_2);
-        char str[5];
-        sprintf(str,"t%d",temp_char-1);
-        push(str);
-        // }
-        // else
-        // {
-        //     char str[50];
-        //     sprintf(str,"t%d=%s%s%s\n",temp_char,arith_1,$<string>2,arith_2);
-        //     push_if(str);
-        //     char temp[5];
-        //     sprintf(temp,"t%d",temp_char);
-        //     push(temp);
-        //     temp_char++;
-        // }
+        if (if_count == -1 || (if_count==0 && in_cond==1))
+        {
+            char * arith_2 = pop();
+            char * arith_1 = pop();
+            printf("t%d=%s%s%s\n",temp_char++,arith_1,$<string>2,arith_2);
+            char str[5];
+            sprintf(str,"t%d",temp_char-1);
+            push(str);
+        }
+        else
+        {
+            char * arith_2 = pop();
+            char * arith_1 = pop();
+            char str[100];
+            sprintf(str,"t%d=%s%s%s\n",temp_char++,arith_1,$<string>2,arith_2);
+            push_if(str);
+            char str_2[5];
+            sprintf(str_2,"t%d",temp_char-1);
+            push(str_2);
+        }
     }
 
 src: 
     | rule src
 rule: WRITE LPAREN printable RPAREN SEMICOLON
     | READ LPAREN readable RPAREN SEMICOLON
-    |{ if_count++;} ifCond
+    |{ if_count++; in_cond = 1;} ifCond
     | forLoop
     | whileLoop
     | assignment
@@ -450,7 +507,7 @@ ifCond: IF conditionals THEN BEG src END SEMICOLON
     }
     | IF conditionals THEN BEG src END ELSE BEG 
     {
-        if (if_count==-1)
+        if (if_count==0)
         {
             char * condition = pop();
             printf("if %s==0 goto L%d\n",condition,label_count);
@@ -476,7 +533,7 @@ ifCond: IF conditionals THEN BEG src END SEMICOLON
     }
     src END SEMICOLON
     {
-        if (if_count==-1)
+        if (if_count==0)
         {
             char * tail = pop_if();
             printf("%s",tail);
@@ -508,6 +565,9 @@ forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression
                 printf("L%d: ",label_count);
                 printf("if %s>%s goto L%d\n",$<string>2,a,label_count+1);
                 push_label(label_count);
+                char forVariable[100];
+                sprintf(forVariable,"%s=%s+1\n",$<string>2,$<string>2);
+                push_for(forVariable);
                 label_count += 2;
             }
             else 
@@ -515,40 +575,95 @@ forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression
                 printf("L%d: ",label_count);
                 printf("if %s<%s goto L%d\n",$<string>2,a,label_count+1);
                 push_label(label_count+1);
+                char forVariable[100];
+                sprintf(forVariable,"%s=%s-1\n",$<string>2,$<string>2);
+                push_for(forVariable);
                 label_count += 2;
             }
         }
         else // To be completed
         {
             char * a = pop();
-            char str[50];
-            sprintf(str,"%s=%s\n",$<string>2,a);
+            char * b = pop();
+            char str[200];
+            if (strcmp($<string>5,"to")==0)
+            {
+                sprintf(str,"%s=%s\nL%d: if %s>%s goto L%d\n",$<string>2,b,label_count,b,a,label_count+1);
+                push_label(label_count);
+                char forVariable[100];
+                sprintf(forVariable,"%s=%s+1\n",$<string>2,$<string>2);
+                push_for(forVariable);
+                label_count += 2;
+            }
+            else 
+            {
+                sprintf(str,"%s=%s\nL%d: if %s<%s goto L%d\n",$<string>2,b,label_count,b,a,label_count+1);
+                push_label(label_count);
+                char forVariable[100];
+                sprintf(forVariable,"%s=%s-1\n",$<string>2,$<string>2);
+                push_for(forVariable);
+                label_count += 2;
+            }
             push_if(str);
         }
     }
     DO BEG src END SEMICOLON
     {
-        int label = pop_label();
-        printf("goto L%d\n",label);
-        printf("L%d:",label+1);
+        if (if_count == -1)
+        {
+            char * forVariable = pop_for();
+            printf("%s",forVariable);
+            int label = pop_label();
+            printf("goto L%d\n",label);
+            printf("L%d:",label+1);
+        }
+        else
+        {
+            int label = pop_label();
+            char str[100];
+            sprintf(str,"%sgoto L%d\nL%d:",pop_for(),label,label+1);
+            push_if(str);        
+        }
     }
     
 whileLoop: WHILE conditionals 
     {
-        char * condition = pop();
-        printf("L%d:",label_count);
-        printf("if %s==0 goto L%d\n",condition,label_count+1);
-        push_label(label_count);
-        label_count++;
+        if (if_count == -1)
+        {
+            char * condition = pop();
+            printf("L%d:",label_count);
+            printf("if %s==0 goto L%d\n",condition,label_count+1);
+            push_label(label_count);
+            label_count+=2;
+        }
+        else
+        {
+            char * condition = pop();
+            char str[50];
+            sprintf(str,"L%d: if %s==0 goto L%d\n",label_count,condition,label_count+1);
+            push_label(label_count);
+            label_count+=2;
+            push_if(str);
+        }
     }
     DO BEG src END SEMICOLON
     {
-        int label = pop_label();
-        printf("goto L%d\n",label);
-        printf("L%d:",label+1);
+        if (if_count == -1)
+        {
+            int label = pop_label();
+            printf("goto L%d\n",label);
+            printf("L%d:",label+1);
+        }
+        else
+        {
+            int label = pop_label();
+            char str[50];
+            sprintf(str,"goto L%d\nL%d:",label,label+1);
+            push_if(str);
+        }
     }
 
-conditionals: bool_exp
+conditionals: bool_exp {if(in_cond==1) in_cond = 0;}
 
 
 %%
