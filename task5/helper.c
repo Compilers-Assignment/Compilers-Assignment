@@ -424,15 +424,15 @@ returnValue eval_tExpression(treeNode *node)
     {
         if (strcmp(node->children->next->node->terminal, "*") == 0)
         {
-            return (returnValue){.intValue = (int)(eval_tExpression(node->children->node).floatValue *
-                                                   eval_fExpression(node->children->next->next->node).floatValue),
+            return (returnValue){.intValue = (int)(eval_tExpression(node->children->node).intValue *
+                                                   eval_fExpression(node->children->next->next->node).intValue),
                                  .floatValue = eval_tExpression(node->children->node).floatValue *
                                                eval_fExpression(node->children->next->next->node).floatValue};
         }
         if (strcmp(node->children->next->node->terminal, "/") == 0)
         {
-            return (returnValue){.intValue = (int)(eval_tExpression(node->children->node).floatValue /
-                                                   eval_fExpression(node->children->next->next->node).floatValue),
+            return (returnValue){.intValue = (int)(eval_tExpression(node->children->node).intValue /
+                                                   eval_fExpression(node->children->next->next->node).intValue),
                                  .floatValue = eval_tExpression(node->children->node).floatValue /
                                                eval_fExpression(node->children->next->next->node).floatValue};
         }
@@ -457,15 +457,15 @@ returnValue eval_arith_expression(treeNode *node)
         if (strcmp(node->children->next->node->terminal, "+") == 0)
         {
             // return eval_arith_expression(node->children->node) + eval_tExpression(node->children->next->next->node);
-            return (returnValue){.intValue = (int)(eval_arith_expression(node->children->node).floatValue +
-                                                   eval_tExpression(node->children->next->next->node).floatValue),
+            return (returnValue){.intValue = (int)(eval_arith_expression(node->children->node).intValue +
+                                                   eval_tExpression(node->children->next->next->node).intValue),
                                  .floatValue = eval_arith_expression(node->children->node).floatValue +
                                                eval_tExpression(node->children->next->next->node).floatValue};
         }
         if (strcmp(node->children->next->node->terminal, "-") == 0)
         {
-            return (returnValue){.intValue = (int)(eval_arith_expression(node->children->node).floatValue -
-                                                   eval_tExpression(node->children->next->next->node).floatValue),
+            return (returnValue){.intValue = (int)(eval_arith_expression(node->children->node).intValue -
+                                                   eval_tExpression(node->children->next->next->node).intValue),
                                  .floatValue = eval_arith_expression(node->children->node).floatValue -
                                                eval_tExpression(node->children->next->next->node).floatValue};
         }
@@ -644,12 +644,24 @@ void eval_write(treeNode *printableNode)
         {
             if (strcmp(tempPrintable->children->node->nonTerminal, "STRING") == 0)
             {
-                printf("%s ", tempPrintable->children->node->terminal);
+                for(int i = 1; i < strlen(tempPrintable->children->node->terminal) - 1; i++)
+                {
+                    printf("%c", tempPrintable->children->node->terminal[i]);
+                }
                 break;
             }
             else
             {
-                printf("%f ", eval_arith_expression(tempPrintable->children->node).floatValue);
+                float tempFloat = eval_arith_expression(tempPrintable->children->node).floatValue;
+                int tempInt = (int)tempFloat;
+                if(tempFloat - tempInt == 0)
+                {
+                    printf("%d ", tempInt);
+                }
+                else
+                {
+                    printf("%f ", tempFloat);
+                }
                 break;
             }
         }
@@ -657,12 +669,24 @@ void eval_write(treeNode *printableNode)
         {
             if (strcmp(tempPrintable->children->node->nonTerminal, "STRING") == 0)
             {
-                printf("%s ", tempPrintable->children->node->terminal);
+                for (int i = 1; i < strlen(tempPrintable->children->node->terminal) - 1; i++)
+                {
+                    printf("%c", tempPrintable->children->node->terminal[i]);
+                }
                 tempPrintable = tempPrintable->children->next->next->node;
             }
             else
             {
-                printf("%f ", eval_arith_expression(tempPrintable->children->node).floatValue);
+                float tempFloat = eval_arith_expression(tempPrintable->children->node).floatValue;
+                int tempInt = (int)tempFloat;
+                if(tempFloat - tempInt == 0)
+                {
+                    printf("%d ", tempInt);
+                }
+                else
+                {
+                    printf("%f ", tempFloat);
+                }
                 tempPrintable = tempPrintable->children->next->next->node;
             }
         }
