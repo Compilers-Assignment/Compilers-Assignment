@@ -224,7 +224,7 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
 	    int j = checkVar($<test.name>1); 
 	    if(j!=-1){
 	    char *type1 = varTypes[j];
-	 
+	    
 	    char *type2;
 	    switch ($<type>3) {
 		case 'i':
@@ -360,20 +360,57 @@ tExpression: tExpression MULOP fExpression {
     	printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
         type_to_string($<type>1), type_to_string($<type>3), yylineno);
 	}
-	int tempint = atoi($<test.val>1) * atoi($<test.val>3);
-	char tempchar[25];
-	sprintf(tempchar, "%d", tempint);
+	//int tempint = atoi($<test.val>1) * atoi($<test.val>3);
+	//char tempchar[25];
+	//sprintf(tempchar, "%d", tempint);
 	if($<type>1 != $<type>3){
 		$<type>$ = 'r';
+		
 	}else{
-		if(!strcmp($<string>2, "/")){
+		if(!strcmp($<string>2, "/") && (atoi($<test.val>1) % atoi($<test.val>3) != 0)){
 			$<type>$ = 'r';
 		}else{
 			$<type>$ = $<type>3;
 		}
 	}
+	if($<type>$ == 'r' && !strcmp($<string>2, "%")){
+		printf("Use of real datatype with %% operator. Line number: %d", yylineno);
+	}
+	char tempchar[25];
+	
+	if(!strcmp($<string>2, "/")){
+		if($<type>$ == 'r'){
+			float tempvar;
+			
+			tempvar = atof($<test.val>1) / atof($<test.val>3);
+			sprintf(tempchar, "%f", tempvar);
+		}else{
+			int tempvar;
+			
+			tempvar = atoi($<test.val>1) / atoi($<test.val>3);
+			sprintf(tempchar, "%d", tempvar);
+		}
+	}else if(!strcmp($<string>2, "*")){
+		if($<type>$ == 'r'){
+			float tempvar;
+			
+			tempvar = atof($<test.val>1) * atof($<test.val>3);
+			sprintf(tempchar, "%f", tempvar);
+		}else{
+			int tempvar;
+			
+			tempvar = atoi($<test.val>1) * atoi($<test.val>3);
+			sprintf(tempchar, "%d", tempvar);
+		}
+	}else{
+		int tempvar;
+		
+		tempvar = atoi($<test.val>1) % atoi($<test.val>3);
+		sprintf(tempchar, "%d", tempvar);
+	}
+	
 	$<test.val>$ = strdup(tempchar);
-	$<test.value>$ = $<test.value>1 * $<test.value>3;
+	//$<test.value>$ = $<test.value>1 * $<test.value>3;
 } 
     | fExpression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1; }
     
@@ -464,7 +501,8 @@ readable: IDENTIFIER { int j = checkVar($<test.name>1); $<test.val>$ = strdup(va
 		  }
     }//this is array bs we take lite for now
 
-indexing: arith_expression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1;}
+indexing: arith_expression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; if($<type>1 != 'i')
+{printf("Array index not integer."); yyerror(1);} else{$<type>$ = $<type>1;}}
 
 /* ifCond: IF conditionals THEN BEG matched END SEMICOLON
     | IF conditionals THEN BEG matched END ELSE BEG 

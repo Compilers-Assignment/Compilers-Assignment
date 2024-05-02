@@ -7,6 +7,8 @@ var
   // the programs starts here
 begin
   f := 7/2;
+  i := f;
+  g[7/2] := 3;
   while grade > 3 do
   begin
   j:=5;
