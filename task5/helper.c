@@ -143,6 +143,7 @@ struct symbolTableNode
     char *charArray;
     int *boolArray;
     int initialized;
+    int *initializedArray;
     symbolTableNode *next;
 };
 
@@ -166,6 +167,7 @@ symbolTableNode *createSymbolTableNode(char *name, char type)
     node->boolArray = NULL;
     node->next = NULL;
     node->initialized = 0;
+    node->initializedArray = NULL;
     return node;
 }
 
@@ -219,10 +221,9 @@ void printSymbolTable(symbolTableNode *table)
     }
     while (temp != NULL)
     {
-        printf("%20s\t\t|", temp->name);
-        if (temp->isArray)
+        if (!temp->isArray)
         {
-            printf("array of ");
+            printf("%20s\t\t|", temp->name);
             if (temp->type == 'i')
             {
                 printf("int\t\t|");
@@ -239,63 +240,6 @@ void printSymbolTable(symbolTableNode *table)
             {
                 printf("bool\t\t|");
             }
-        }
-        else
-        {
-            if (temp->type == 'i')
-            {
-                printf("int\t\t|");
-            }
-            else if (temp->type == 'r')
-            {
-                printf("real\t\t|");
-            }
-            else if (temp->type == 'c')
-            {
-                printf("char\t\t|");
-            }
-            else if (temp->type == 'b')
-            {
-                printf("bool\t\t|");
-            }
-        }
-        if (temp->isArray)
-        {
-            if (temp->type == 'i')
-            {
-                for (int i = 0; i < temp->arraySize; i++)
-                {
-                    printf("%d ", temp->intArray[i]);
-                }
-                printf("\n");
-            }
-            else if (temp->type == 'r')
-            {
-                for (int i = 0; i < temp->arraySize; i++)
-                {
-                    printf("%f ", temp->floatArray[i]);
-                }
-                printf("\n");
-            }
-            else if (temp->type == 'c')
-            {
-                for (int i = 0; i < temp->arraySize; i++)
-                {
-                    printf("%c ", temp->charArray[i]);
-                }
-                printf("\n");
-            }
-            else if (temp->type == 'b')
-            {
-                for (int i = 0; i < temp->arraySize; i++)
-                {
-                    printf("%d ", temp->boolArray[i]);
-                }
-                printf("\n");
-            }
-        }
-        else
-        {
             if (temp->initialized)
             {
                 if (temp->type == 'i')
@@ -320,6 +264,63 @@ void printSymbolTable(symbolTableNode *table)
                 printf("(uninitialized)\n");
             }
         }
+
+        if (temp->isArray)
+        {
+            for(int i = 0; i < temp->arraySize; i++)
+            {
+                printf("%20s[%d]\t\t|", temp->name, i + temp->startIndex);
+                if (temp->type == 'i')
+                {
+                    printf("int\t\t|");
+                    if (temp->initializedArray[i])
+                    {
+                        printf("%d\n", temp->intArray[i]);
+                    }
+                    else
+                    {
+                        printf("(uninitialized)\n");
+                    }
+                }
+                else if (temp->type == 'r')
+                {
+                    printf("real\t\t|");
+                    if (temp->initializedArray[i])
+                    {
+                        printf("%f\n", temp->floatArray[i]);
+                    }
+                    else
+                    {
+                        printf("(uninitialized)\n");
+                    }
+                }
+                else if (temp->type == 'c')
+                {
+                    printf("char\t\t|");
+                    if (temp->initializedArray[i])
+                    {
+                        printf("%c\n", temp->charArray[i]);
+                    }
+                    else
+                    {
+                        printf("(uninitialized)\n");
+                    }
+                }
+                else if (temp->type == 'b')
+                {
+                    printf("bool\t\t|");
+                    if (temp->initializedArray[i])
+                    {
+                        printf("%d\n", temp->boolArray[i]);
+                    }
+                    else
+                    {
+                        printf("(uninitialized)\n");
+                    }
+                }
+            }
+        }
+        
         temp = temp->next;
     }
 }
@@ -721,6 +722,7 @@ void eval_assignment(treeNode *node)
             {
                 temp->boolArray[index] = eval_expression(expressionNode).intValue;
             }
+            temp->initializedArray[index] = 1;
         }
     }
 }
