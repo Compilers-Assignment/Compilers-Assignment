@@ -1,8 +1,8 @@
 program ArrayAverage;
 var
   grade : char ;
-  b,c,d,a,grade : array [1..10] of Integer ;
-   b: real;
+  b,c,d,a,grade,b : array [1..10] of Integer ;
+  b: real;
   // the programs starts here
 begin
   

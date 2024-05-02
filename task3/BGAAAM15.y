@@ -26,10 +26,10 @@
         char **newVarNames = realloc(varNames, newCapacity * sizeof(char*));
         char **newVarTypes = realloc(varTypes, newCapacity * sizeof(char*));
         char **newVarValues = realloc(varValues, newCapacity * sizeof(char *));
-        if (!newVarNames) {
-            perror("Out of memory");
-            exit(EXIT_FAILURE);
-        }
+        // if (!newVarNames) {
+        //     perror("Out of memory");
+        //     exit(EXIT_FAILURE);
+        // }
         varNames = newVarNames;
         varTypes = newVarTypes;
         varValues = newVarValues;
@@ -64,10 +64,10 @@
 	    	
 	    ensureCapacity(varCount + 1);
 	    varNames[varCount] = strdup(name); // Duplicate the string to store it
-	    if (!varNames[varCount]) {
-		perror("Out of memory");
-		exit(EXIT_FAILURE);
-	    }
+	    // if (!varNames[varCount]) {
+		// perror("Out of memory");
+		// exit(EXIT_FAILURE);
+	    // }
 	    varCount++;
 	    
 	    return 1;
@@ -81,10 +81,10 @@
 	    varTypes[i] = strdup(name); // Duplicate the string to store it
 	    }
 	    
-	    if (!varNames[typeCount]) {
-		perror("Out of memory");
-		exit(EXIT_FAILURE);
-	    }
+	    // if (!varNames[typeCount]) {
+		// perror("Out of memory");
+		// exit(EXIT_FAILURE);
+	    // }
 	    typeCount = varCount;
 	    
 	    
@@ -151,10 +151,10 @@
 		for (int j = left; j <= right; j++) {
 		    // Allocate memory for the new variable name
 		    char *newVarName = malloc(strlen(baseName) + 16); // 16 for subscript and null terminator
-		    if (newVarName == NULL) {
-		        perror("Out of memory");
-		        exit(EXIT_FAILURE);
-		    }
+		    // if (newVarName == NULL) {
+		    //     perror("Out of memory");
+		    //     exit(EXIT_FAILURE);
+		    // }
 
 		    // Construct the new variable name with subscript
 		    sprintf(newVarName, "%s[%d]", baseName, j);
