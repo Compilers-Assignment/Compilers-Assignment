@@ -632,7 +632,7 @@ void eval_write(treeNode *printableNode)
             }
             else
             {
-                printf("%f ", eval_arith_expression(tempPrintable->children->node).floatValue);
+                printf("%d ", eval_arith_expression(tempPrintable->children->node).intValue);
                 break;
             }
         }
@@ -645,7 +645,7 @@ void eval_write(treeNode *printableNode)
             }
             else
             {
-                printf("%f ", eval_arith_expression(tempPrintable->children->node).floatValue);
+                printf("%d ", eval_arith_expression(tempPrintable->children->node).intValue);
                 tempPrintable = tempPrintable->children->next->next->node;
             }
         }
