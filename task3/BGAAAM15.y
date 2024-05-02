@@ -420,7 +420,7 @@ tExpression: tExpression MULOP fExpression {
 		$<type>$ = 'r';
 		
 	}else{
-		if(!strcmp($<string>2, "/") && (atoi($<test.val>1) % atoi($<test.val>3) != 0)){
+		if(!strcmp($<string>2, "/")){
 			$<type>$ = 'r';
 		}else{
 			$<type>$ = $<type>3;
@@ -437,7 +437,7 @@ tExpression: tExpression MULOP fExpression {
 			
 			if(strcmp($<test.val>1, "NULL") && strcmp($<test.val>3, "NULL"))
 			{
-				tempvar = atof($<test.val>1) * atof($<test.val>3);
+				tempvar = atof($<test.val>1) / atof($<test.val>3);
 				sprintf(tempchar, "%f", tempvar);
 			}else{
 				f=1;
