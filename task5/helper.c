@@ -213,13 +213,13 @@ void printSymbolTable(symbolTableNode *table)
     else
     {
         printf("Symbol table:\n");
-        printf("Name\t\t|Type\t\t|Value\n");
-        printf("---------------------------------\n");
+        printf("               Name\t\t|Type\t\t|Value\n");
+        printf("-----------------------------------------------------\n");
         temp = temp->next;
     }
     while (temp != NULL)
     {
-        printf("%s\t\t|", temp->name);
+        printf("%20s\t\t|", temp->name);
         if (temp->isArray)
         {
             printf("array of ");
