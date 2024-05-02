@@ -90,10 +90,12 @@ stack *createStack()
     newStack->top = NULL;
     return newStack;
 }
+
 int isEmpty(stack *s)
 {
     return s->top == NULL;
 }
+
 void push(stack *s, treeNode *node)
 {
     stackLinkedList *newNode = (stackLinkedList *)malloc(sizeof(stackLinkedList));
@@ -106,6 +108,7 @@ void push(stack *s, treeNode *node)
     newNode->next = s->top;
     s->top = newNode;
 }
+
 treeNode *pop(stack *s)
 {
     if (isEmpty(s))
@@ -308,8 +311,16 @@ void printSymbolTable(symbolTableNode *table)
 }
 
 int eval_arith_expression(treeNode *node);
+int eval_bool_exp(treeNode *node);
 
-// TODO: handling floats
+typedef struct returnVal
+{
+    int intValue;
+    float floatValue;
+    char charValue;
+    int boolValue;
+} returnVal;
+
 int eval_readable(treeNode *node)
 {
     if (lengthOfStackLinkedList(node->children) == 1)
@@ -352,7 +363,6 @@ int eval_readable(treeNode *node)
     }
 }
 
-// TODO: handling floats
 int eval_fExpression(treeNode *node)
 {
     if (lengthOfStackLinkedList(node->children) == 1)
@@ -376,7 +386,6 @@ int eval_fExpression(treeNode *node)
     }
 }
 
-// TODO: handling floats
 int eval_tExpression(treeNode *node)
 {
     if (lengthOfStackLinkedList(node->children) == 1)
@@ -400,7 +409,6 @@ int eval_tExpression(treeNode *node)
     }
 }
 
-// TODO: handling floats
 int eval_arith_expression(treeNode *node)
 {
     if (lengthOfStackLinkedList(node->children) == 1)
@@ -417,18 +425,6 @@ int eval_arith_expression(treeNode *node)
         {
             return eval_arith_expression(node->children->node) - eval_tExpression(node->children->next->next->node);
         }
-    }
-}
-
-// TODO: handling floats
-int eval_expression(treeNode *node)
-{
-    if (strcmp(node->children->node->nonTerminal, "arith_expression") == 0)
-    {
-        return eval_arith_expression(node->children->node);
-    }
-    else
-    {
     }
 }
 
@@ -463,8 +459,77 @@ int eval_cond(treeNode *node)
     }
 }
 
-// TODO: handling floats
-int read_readable(treeNode *node)
+int eval_factor(treeNode *node)
+{
+    if (lengthOfStackLinkedList(node->children) == 1)
+    {
+        if (strcmp(node->children->node->nonTerminal, "cond") == 0)
+        {
+            return eval_cond(node->children->node);
+        }
+        else
+        {
+            symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
+            if (temp != NULL)
+            {
+                if (temp->type == 'b')
+                {
+                    return temp->boolValue;
+                }
+                else
+                {
+                    return temp->intValue != 0;
+                }
+            }
+        }
+    }
+    if (strcmp(node->children->node->nonTerminal, "NOT") == 0)
+    {
+        return !eval_factor(node->children->next->node);
+    }
+    else
+    {
+        return eval_bool_exp(node->children->next->node);
+    }
+}
+
+int eval_term(treeNode *node)
+{
+    if (lengthOfStackLinkedList(node->children) == 1)
+    {
+        return eval_factor(node->children->node);
+    }
+    else
+    {
+        return eval_term(node->children->node) && eval_factor(node->children->next->next->node);
+    }
+}
+
+int eval_bool_exp(treeNode *node)
+{
+    if (lengthOfStackLinkedList(node->children) == 1)
+    {
+        return eval_term(node->children->node);
+    }
+    else
+    {
+        return eval_bool_exp(node->children->node) || eval_term(node->children->next->next->node);
+    }
+}
+
+int eval_expression(treeNode *node)
+{
+    if (strcmp(node->children->node->nonTerminal, "arith_expression") == 0)
+    {
+        return eval_arith_expression(node->children->node);
+    }
+    else
+    {
+        return eval_bool_exp(node->children->node);
+    }
+}
+
+void read_readable(treeNode *node)
 {
     if (lengthOfStackLinkedList(node->children) == 1)
     {
@@ -477,7 +542,7 @@ int read_readable(treeNode *node)
             }
             else if (temp->type == 'c')
             {
-                scanf(" %c", &temp->charValue);
+                scanf("%c", &temp->charValue);
             }
             else if (temp->type == 'b')
             {
@@ -496,12 +561,213 @@ int read_readable(treeNode *node)
             }
             else if (temp->type == 'c')
             {
-                scanf(" %c", &temp->charArray[eval_arith_expression(node->children->next->next->node->children->node)]);
+                scanf("%c", &temp->charArray[eval_arith_expression(node->children->next->next->node->children->node)]);
             }
             else if (temp->type == 'b')
             {
                 scanf("%d", &temp->boolArray[eval_arith_expression(node->children->next->next->node->children->node)]);
             }
+        }
+    }
+}
+
+void eval_write(treeNode *printableNode)
+{
+    treeNode *tempPrintable = printableNode;
+    while (1)
+    {
+        if (lengthOfStackLinkedList(tempPrintable->children) == 1)
+        {
+            if (strcmp(tempPrintable->children->node->nonTerminal, "STRING") == 0)
+            {
+                printf("%s ", tempPrintable->children->node->terminal);
+                break;
+            }
+            else
+            {
+                printf("%d ", eval_arith_expression(tempPrintable->children->node));
+                break;
+            }
+        }
+        else
+        {
+            if (strcmp(tempPrintable->children->node->nonTerminal, "STRING") == 0)
+            {
+                printf("%s ", tempPrintable->children->node->terminal);
+                tempPrintable = tempPrintable->children->next->next->node;
+            }
+            else
+            {
+                printf("%d ", eval_arith_expression(tempPrintable->children->node));
+                tempPrintable = tempPrintable->children->next->next->node;
+            }
+        }
+    }
+    printf("\n");
+}
+
+void eval_assignment(treeNode *node)
+{
+    if (lengthOfStackLinkedList(node->children) == 4)
+    {
+        symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
+        treeNode *expressionNode = node->children->next->next->node;
+        if (temp != NULL)
+        {
+            if (temp->type == 'i')
+            {
+                temp->intValue = eval_expression(expressionNode);
+            }
+            else if (temp->type == 'r')
+            {
+                temp->floatValue = eval_expression(expressionNode);
+            }
+            else if (temp->type == 'c')
+            {
+                temp->charValue = eval_expression(expressionNode);
+            }
+            else if (temp->type == 'b')
+            {
+                temp->boolValue = eval_expression(expressionNode);
+            }
+        }
+    }
+    else
+    {
+        symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
+        treeNode *expressionNode = node->children->next->next->next->next->next->node;
+        treeNode *indexNode = node->children->next->next->node;
+        int index = eval_arith_expression(indexNode->children->node);
+
+        if (temp != NULL)
+        {
+            if (temp->type == 'i')
+            {
+                temp->intArray[index] = eval_expression(expressionNode);
+            }
+            else if (temp->type == 'r')
+            {
+                temp->floatArray[index] = eval_expression(expressionNode);
+            }
+            else if (temp->type == 'c')
+            {
+                temp->charArray[index] = eval_expression(expressionNode);
+            }
+            else if (temp->type == 'b')
+            {
+                temp->boolArray[index] = eval_expression(expressionNode);
+            }
+        }
+    }
+}
+
+void eval_src(treeNode *node);
+
+void eval_if(treeNode *node)
+{
+    if (lengthOfStackLinkedList(node->children) == 7)
+    {
+        if (eval_bool_exp(node->children->next->node))
+        {
+            eval_src(node->children->next->next->next->next->node);
+        }
+    }
+    else
+    {
+        if (eval_bool_exp(node->children->next->node))
+        {
+            eval_src(node->children->next->next->next->next->node);
+        }
+        else
+        {
+            eval_src(node->children->next->next->next->next->next->next->next->next->node);
+        }
+    }
+}
+
+void eval_for(treeNode *node)
+{
+    treeNode *aNode1 = node->children->next->next->next->node;
+    treeNode *aNode2 = node->children->next->next->next->next->next->node;
+    symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->next->node->terminal);
+    int start = eval_arith_expression(aNode1);
+    int end = eval_arith_expression(aNode2);
+    int up = strcmp(node->children->next->next->next->next->node->children->node->terminal, "TO") == 0 ? 1 : 0;
+    if (up)
+    {
+        for (int i = start; i <= end; i++)
+        {
+            temp->intValue = i;
+            eval_src(node->children->next->next->next->next->next->next->next->next->node);
+        }
+    }
+    else
+    {
+        for (int i = start; i >= end; i--)
+        {
+            temp->intValue = i;
+            eval_src(node->children->next->next->next->next->next->next->next->next->node);
+        }
+    }
+}
+
+void eval_while(treeNode *node)
+{
+    while (eval_bool_exp(node->children->next->node))
+    {
+        eval_src(node->children->next->next->next->next->node);
+    }
+}
+
+void eval_rule(treeNode *node)
+{
+    if (strcmp(node->children->node->nonTerminal, "WRITE") == 0)
+    {
+        eval_write(node->children->next->next->node);
+    }
+    else if (strcmp(node->children->node->nonTerminal, "READ") == 0)
+    {
+        read_readable(node->children->next->next->node);
+    }
+    else if (strcmp(node->children->node->nonTerminal, "assignment") == 0)
+    {
+        eval_assignment(node->children->node);
+    }
+    else if (strcmp(node->children->node->nonTerminal, "BEG") == 0)
+    {
+        eval_src(node->children->next->node);
+    }
+    else if (strcmp(node->children->node->nonTerminal, "ifCond") == 0)
+    {
+        eval_if(node->children->node);
+    }
+    else if (strcmp(node->children->node->nonTerminal, "forLoop") == 0)
+    {
+        eval_for(node->children->node);
+    }
+    else if (strcmp(node->children->node->nonTerminal, "whileLoop") == 0)
+    {
+        eval_while(node->children->node);
+    }
+    else
+    {
+        printf("Invalid rule\n");
+    }
+}
+
+void eval_src(treeNode *node)
+{
+    treeNode *temp = node;
+    while (1)
+    {
+        if (lengthOfStackLinkedList(temp->children) == 0)
+        {
+            break;
+        }
+        else
+        {
+            eval_rule(temp->children->node);
+            temp = temp->children->next->node;
         }
     }
 }

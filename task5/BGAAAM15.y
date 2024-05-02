@@ -7,6 +7,7 @@
     int yylex();
     extern FILE *yyin;
     void yyerror();
+
 %}
 
 %token PROGRAM INTEGER REAL BOOLEAN CHAR TO DOWNTO IF ELSE VAR WHILE FOR DO ARRAY BEG END READ WRITE THEN AND OR NOT INTLITERAL IDENTIFIER ADDOP MULOP RELOP ASGOP SEMICOLON COLON LBRACKET RBRACKET COMMA LPAREN RPAREN PERIOD STRING OF CHAR_LIT
@@ -45,6 +46,8 @@ body: VAR declList BEG src END PERIOD {
     addChild(node, createNode("PERIOD", "."));
 
     push(parseStack, node);
+
+    eval_src(srcNode);
 }
 
 declList:   {
@@ -240,27 +243,6 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON {
         addChild(node, createNode("SEMICOLON", ";"));
 
         push(parseStack, node);
-
-        // symbol table
-        symbolTableNode *temp = searchSymbolTable(symbolTable, $<string>1);
-        if(temp != NULL){
-            if (temp->type == 'i')
-            {
-                temp->intValue = eval_expression(expressionNode);
-            }
-            else if (temp->type == 'r')
-            {
-                temp->floatValue = eval_expression(expressionNode);
-            }
-            else if (temp->type == 'c')
-            {
-                temp->charValue = eval_expression(expressionNode);
-            }
-            else if (temp->type == 'b')
-            {
-                temp->boolValue = eval_expression(expressionNode);
-            }
-        }
     }
     | IDENTIFIER LBRACKET indexing RBRACKET ASGOP expression SEMICOLON {
         treeNode *expressionNode = pop(parseStack);
@@ -277,28 +259,6 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON {
         addChild(node, createNode("SEMICOLON", ";"));
 
         push(parseStack, node);
-
-        // symbol table
-        symbolTableNode *temp = searchSymbolTable(symbolTable, $<string>1);
-        int index = eval_arith_expression(indexingNode->children->node);
-        if(temp != NULL){
-            if (temp->type == 'i')
-            {
-                temp->intArray[index] = eval_expression(expressionNode);
-            }
-            else if (temp->type == 'r')
-            {
-                temp->floatArray[index] = eval_expression(expressionNode);
-            }
-            else if (temp->type == 'c')
-            {
-                temp->charArray[index] = eval_expression(expressionNode);
-            }
-            else if (temp->type == 'b')
-            {
-                temp->boolValue = eval_expression(expressionNode);
-            }
-        }
     }
 
 expression: arith_expression {
@@ -490,15 +450,13 @@ printable: STRING {
     }
     | arith_expression COMMA printable {
         treeNode *printableNode = pop(parseStack);
-        treeNode *readableNode = pop(parseStack);
+        treeNode *arithExpressionNode = pop(parseStack);
 
         treeNode *node = createNode("printable", NULL);
 
-        addChild(node, readableNode);
+        addChild(node, arithExpressionNode);
         addChild(node, createNode("COMMA", ","));
         addChild(node, printableNode);
-
-        
 
         push(parseStack, node);
     } 
@@ -539,18 +497,17 @@ range: TO {
     }
 
 cond: arith_expression RELOP arith_expression {
-    treeNode *arithExpressionNode2 = pop(parseStack);
-    treeNode *arithExpressionNode1 = pop(parseStack);
+        treeNode *arithExpressionNode2 = pop(parseStack);
+        treeNode *arithExpressionNode1 = pop(parseStack);
 
-    treeNode *node = createNode("cond", NULL);
-    
-    addChild(node, arithExpressionNode1);
-    addChild(node, createNode("RELOP", $<string>2));
-    addChild(node, arithExpressionNode2);
+        treeNode *node = createNode("cond", NULL);
+        
+        addChild(node, arithExpressionNode1);
+        addChild(node, createNode("RELOP", $<string>2));
+        addChild(node, arithExpressionNode2);
 
-    push(parseStack, node);
-}
-
+        push(parseStack, node);
+    }
 src: {
         treeNode *node = createNode("src", NULL);
 
@@ -580,35 +537,6 @@ rule: WRITE LPAREN printable RPAREN SEMICOLON {
         addChild(node, createNode("SEMICOLON", ";"));
 
         push(parseStack, node);
-
-        // print
-        treeNode *tempPrintable = printableNode;
-        while (1){
-            if (lengthOfStackLinkedList(tempPrintable->children) == 1)
-            {
-                if(strcmp(tempPrintable->children->node->nonTerminal, "STRING") == 0){  
-                    printf("%s ", tempPrintable->children->node->terminal);
-                    break;
-                }
-                else{
-                    printf("%d ", eval_arith_expression(tempPrintable->children->node));
-                    break;
-                }
-                
-            }
-            else
-            {   
-                if (strcmp(tempPrintable->children->node->nonTerminal, "STRING") == 0){
-                    printf("%s ", tempPrintable->children->node->terminal);
-                    tempPrintable = tempPrintable->children->next->next->node;
-                }
-                else{
-                    printf("%d ", eval_arith_expression(tempPrintable->children->node));
-                    tempPrintable = tempPrintable->children->next->next->node;
-                }
-            }
-        }
-        printf("\n");
     }
     | READ LPAREN readable RPAREN SEMICOLON {
         treeNode *readableNode = pop(parseStack);
@@ -622,8 +550,6 @@ rule: WRITE LPAREN printable RPAREN SEMICOLON {
         addChild(node, createNode("SEMICOLON", ";"));
 
         push(parseStack, node);
-
-        read_readable(readableNode);
     }
     | ifCond {
         treeNode *ifCondNode = pop(parseStack);
@@ -703,14 +629,14 @@ indexing: arith_expression {
         push(parseStack, node);
     }
 
-ifCond: IF conditionals THEN BEG src END SEMICOLON {
+ifCond: IF bool_exp THEN BEG src END SEMICOLON {
         treeNode *srcNode = pop(parseStack);
-        treeNode *conditionalsNode = pop(parseStack);
+        treeNode *boolExpNode = pop(parseStack);
 
         treeNode *node = createNode("ifCond", NULL);
 
         addChild(node, createNode("IF", "IF"));
-        addChild(node, conditionalsNode);
+        addChild(node, boolExpNode);
         addChild(node, createNode("THEN", "THEN"));
         addChild(node, createNode("BEG", "BEGIN"));
         addChild(node, srcNode);
@@ -719,15 +645,15 @@ ifCond: IF conditionals THEN BEG src END SEMICOLON {
         
         push(parseStack, node);
     }
-    | IF conditionals THEN BEG src END ELSE BEG src END SEMICOLON {
+    | IF bool_exp THEN BEG src END ELSE BEG src END SEMICOLON {
         treeNode *srcNode2 = pop(parseStack);
         treeNode *srcNode = pop(parseStack);
-        treeNode *conditionalsNode = pop(parseStack);
+        treeNode *boolExpNode = pop(parseStack);
 
         treeNode *node = createNode("ifCond", NULL);
 
         addChild(node, createNode("IF", "IF"));
-        addChild(node, conditionalsNode);
+        addChild(node, boolExpNode);
         addChild(node, createNode("THEN", "THEN"));
         addChild(node, createNode("BEG", "BEGIN"));
         addChild(node, srcNode);
@@ -743,8 +669,8 @@ ifCond: IF conditionals THEN BEG src END SEMICOLON {
 
 forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG src END SEMICOLON {
     treeNode *srcNode = pop(parseStack);
-    treeNode *rangeNode = pop(parseStack);
     treeNode *arithExpressionNode2 = pop(parseStack);
+    treeNode *rangeNode = pop(parseStack);
     treeNode *arithExpressionNode1 = pop(parseStack);
 
     treeNode *node = createNode("forLoop", NULL);
@@ -764,29 +690,19 @@ forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression DO BEG src
     push(parseStack, node);
 }
 
-whileLoop: WHILE conditionals DO BEG src END SEMICOLON {
+whileLoop: WHILE bool_exp DO BEG src END SEMICOLON {
     treeNode *srcNode = pop(parseStack);
-    treeNode *conditionalsNode = pop(parseStack);
+    treeNode *boolExpNode = pop(parseStack);
 
     treeNode *node = createNode("whileLoop", NULL);
 
     addChild(node, createNode("WHILE", "WHILE"));
-    addChild(node, conditionalsNode);
+    addChild(node, boolExpNode);
     addChild(node, createNode("DO", "DO"));
     addChild(node, createNode("BEG", "BEGIN"));
     addChild(node, srcNode);
     addChild(node, createNode("END", "END"));
     addChild(node, createNode("SEMICOLON", ";"));
-
-    push(parseStack, node);
-}
-
-conditionals: bool_exp {
-    treeNode *boolExpNode = pop(parseStack);
-
-    treeNode *node = createNode("conditionals", NULL);
-    
-    addChild(node, boolExpNode);
 
     push(parseStack, node);
 }
