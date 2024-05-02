@@ -477,7 +477,7 @@ tExpression: tExpression MULOP fExpression {
 fExpression: LPAREN arith_expression RPAREN {$<test.val>$ = strdup($<test.val>2); $<test.value>$ = $<test.value>2; $<type>$ = $<type>2;}
     | readable {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
     | INTLITERAL {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = 'i';}
-    | CHAR_LIT {$<type>$ = 'c';}
+    | CHAR_LIT {$<test.val>$ = strdup($<test.val>1); $<type>$ = 'c';}
 
 
 bool_exp: term {$<type>$ = $<type>1;}

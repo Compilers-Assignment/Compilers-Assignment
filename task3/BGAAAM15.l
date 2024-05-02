@@ -28,6 +28,11 @@ number [0-9]
 \".*\" {return STRING;}
 \'[0-9a-zA-Z]\' {
     // printf("%d %s character literal\n", linecount, yytext); 
+int tempvar = (int)yytext[1];
+char str2[30];
+sprintf(str2, "%d", tempvar);
+yylval.test.val = strdup(str2);
+//printf("the char lit value is %c", tempvar);
 return CHAR_LIT;}
 
 (program|integer|real|boolean|char|to|downto|if|else|var|while|for|do|array|begin|end|read|write|then|array|of|writeln) { 
