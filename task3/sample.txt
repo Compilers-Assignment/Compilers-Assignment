@@ -1,24 +1,14 @@
-program forif;
+program ArrayAverage;
 var
-  i, j: Integer;
-  k, d: boolean;
-  f, t, e: array[1..2] of Integer;
-  p: array[2..3] of boolean;
- 
+  grade : char ;
+  b,c,d,a,g: array [1..10] of Integer ;
+  i,j: Integer;
+  f: Real;
+  // the programs starts here
 begin
-  for i := 1 to 20 do
-   begin
-     if i % 3 = 0 then 
-      begin
-        j := i+2; 
-        write(j);
-      end;
-    end;
-    
-   while i > 0 do
-   begin
-     j := i;
-   end;
-    
-
+  f := 7/2;
+  while grade > 3 do
+  begin
+  j:=5;
+  end;
 end.

@@ -28,7 +28,6 @@ number [0-9]
 \".*\" {return STRING;}
 \'[0-9a-zA-Z]\' {
     // printf("%d %s character literal\n", linecount, yytext); 
-yylval.integer = atoi(yytext);
 return CHAR_LIT;}
 
 (program|integer|real|boolean|char|to|downto|if|else|var|while|for|do|array|begin|end|read|write|then|array|of|writeln) { 
@@ -73,13 +72,16 @@ return CHAR_LIT;}
     
     // printf("%d %s integer literal\n", linecount, yytext); 
     yylval.integer = atoi(yytext);
+    yylval.test.value = atoi(yytext);
+    yylval.test.val = strdup(yytext);
     return INTLITERAL;
 }
 
 {letter}({letter}|{number}|_)* {
 
     // // printf("%d %s identifier\n", linecount, yytext); 
-    yylval.string = strdup(yytext);
+    //yylval.string = strdup(yytext);
+    yylval.test.name = strdup(yytext);
     return IDENTIFIER;
 }
 
@@ -88,16 +90,50 @@ return CHAR_LIT;}
     // printf("%d %s arithmetic operator\n", linecount, yytext);  
     convertToLower(yytext);
 
-    if (strcmp(yytext, "+") == 0) return ADDOP;
-    if (strcmp(yytext, "-") == 0) return ADDOP;
-    if (strcmp(yytext, "*") == 0) return MULOP;
-    if (strcmp(yytext, "/") == 0) return MULOP;
-    if (strcmp(yytext, "%") == 0) return MULOP;
+    if (strcmp(yytext, "+") == 0) {
+        yylval.string = "+";
+        return ADDOP;
+    }
+    if (strcmp(yytext, "-") == 0) {
+        yylval.string = "-";
+        return ADDOP;
+    }
+    if (strcmp(yytext, "*") == 0) {
+        yylval.string = "*";
+        return MULOP;
+    };
+    if (strcmp(yytext, "/") == 0) {
+        yylval.string = "/";
+        return MULOP;
+    };
+    if (strcmp(yytext, "%") == 0) {
+        yylval.string = "%";
+        return MULOP;
+    };
 }
 
 (=|<>|<|>|<=|>=) {
 
     // printf("%d %s relational operator\n", linecount, yytext);
+    if(strcmp(yytext, "=") == 0){
+        yylval.string = "=";
+    }
+    if(strcmp(yytext, "<>") == 0){
+        yylval.string = "<>";
+    }
+    if(strcmp(yytext, "<") == 0){
+        yylval.string = "<";
+    }
+    if(strcmp(yytext, ">") == 0){
+        yylval.string = ">";
+    }
+    if(strcmp(yytext, "<=") == 0){
+        yylval.string = "<=";
+    }
+    if(strcmp(yytext, ">=") == 0){
+        yylval.string = ">=";
+    }
+    return RELOP;
 
     return RELOP;
 }
@@ -114,7 +150,7 @@ return CHAR_LIT;}
     convertToLower(yytext);
 
     if (strcmp(yytext, ";") == 0) return SEMICOLON;
-    if (strcmp(yytext, ":") == 0) {yylval.string = strdup(yytext); return COLON;} //might be a breaking change, be careful
+    if (strcmp(yytext, ":") == 0) {yylval.test.name = strdup(yytext); return COLON;} //might be a breaking change, be careful
     if (strcmp(yytext, "[") == 0) return LBRACKET;
     if (strcmp(yytext, "]") == 0) return RBRACKET;
     if (strcmp(yytext, ",") == 0) return COMMA;
