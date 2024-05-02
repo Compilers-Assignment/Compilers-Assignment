@@ -202,6 +202,7 @@ symbolTableNode *createSymbolTable()
 
 void printSymbolTable(symbolTableNode *table)
 {
+    printf("-----------------------------------------------------\n");
     symbolTableNode *temp = table;
     if (temp->next == NULL)
     {
@@ -210,6 +211,7 @@ void printSymbolTable(symbolTableNode *table)
     else
     {
         printf("Symbol table:\n");
+        printf("Name\tType\tValue\n");
         temp = temp->next;
     }
     while (temp != NULL)
@@ -351,7 +353,8 @@ returnValue eval_readable(treeNode *node)
     else
     {
         symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
-        int index = (eval_arith_expression(node->children->next->next->node->children->node)).intValue - temp->startIndex;
+        int index =
+            (eval_arith_expression(node->children->next->next->node->children->node)).intValue - temp->startIndex;
         if (temp != NULL)
         {
             if (temp->type == 'i')
@@ -599,7 +602,8 @@ void read_readable(treeNode *node)
         symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
         if (temp != NULL)
         {
-            int index = eval_arith_expression(node->children->next->next->node->children->node).intValue - temp->startIndex;
+            int index =
+                eval_arith_expression(node->children->next->next->node->children->node).intValue - temp->startIndex;
             if (temp->type == 'i')
             {
                 scanf("%d", &temp->intArray[index]);
