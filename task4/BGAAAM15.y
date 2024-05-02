@@ -43,7 +43,7 @@
         char operand2[100];
         char result[100];
     } quad[25];
-    char if_stack[100][100];
+    char if_stack[100][5000];
     struct variable
     {
         char name[10];
@@ -486,12 +486,13 @@ ifCond: IF conditionals THEN BEG src END SEMICOLON
         }
         else
         {
-            char str[100];
+            char str[2000];
             char * condition = pop();
             char * matched = pop_if();
-            sprintf(str,"if %s==0 goto L%d\n%sL%d:\n",condition,label_count,matched,label_count++);
-            push_if(str);
             if_count--;
+            sprintf(str,"if %s==0 goto L%d\n%sL%d:\n",condition,label_count,matched,label_count);
+            label_count++;
+            push_if(str);
         }
     }
     | IF conditionals THEN BEG src END ELSE BEG 
@@ -517,7 +518,6 @@ ifCond: IF conditionals THEN BEG src END SEMICOLON
             push_if(str);
             push_label(label_count+1);
             label_count += 2;
-            clear_if();
         }
     }
     src END SEMICOLON
@@ -533,8 +533,8 @@ ifCond: IF conditionals THEN BEG src END SEMICOLON
         {
             char str[50];
             char * tail = pop_if();
-            sprintf(str,"%sL%d:\n",tail,pop_label());
             if_count--;
+            sprintf(str,"%sL%d:\n",tail,pop_label());
             push_if(str);
         }
     }
