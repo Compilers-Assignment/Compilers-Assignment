@@ -310,18 +310,18 @@ void printSymbolTable(symbolTableNode *table)
     }
 }
 
-int eval_arith_expression(treeNode *node);
-int eval_bool_exp(treeNode *node);
+typedef struct returnValue returnValue;
 
-typedef struct returnVal
+struct returnValue
 {
     int intValue;
     float floatValue;
-    char charValue;
-    int boolValue;
-} returnVal;
+};
 
-int eval_readable(treeNode *node)
+returnValue eval_arith_expression(treeNode *node);
+returnValue eval_bool_exp(treeNode *node);
+
+returnValue eval_readable(treeNode *node)
 {
     if (lengthOfStackLinkedList(node->children) == 1)
     {
@@ -330,59 +330,62 @@ int eval_readable(treeNode *node)
         {
             if (temp->type == 'i')
             {
-                return temp->intValue;
+                return (returnValue){.intValue = temp->intValue, .floatValue = (float)temp->intValue};
             }
             else if (temp->type == 'c')
             {
-                return (int)temp->charValue;
+                return (returnValue){.intValue = (int)temp->charValue, .floatValue = (float)temp->charValue};
             }
             else if (temp->type == 'b')
             {
-                return temp->boolValue;
+                return (returnValue){.intValue = temp->boolValue, .floatValue = (float)temp->boolValue};
             }
             else if (temp->type == 'r')
             {
-                return (int)temp->floatValue;
+                return (returnValue){.intValue = (int)temp->floatValue, .floatValue = temp->floatValue};
             }
         }
     }
     else
     {
         symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
-        int index = eval_arith_expression(node->children->next->next->node->children->node) - 1;
+        int index = (eval_arith_expression(node->children->next->next->node->children->node)).intValue - 1;
         if (temp != NULL)
         {
             if (temp->type == 'i')
             {
-                return temp->intArray[index];
+                return (returnValue){.intValue = temp->intArray[index], .floatValue = (float)temp->intArray[index]};
             }
             else if (temp->type == 'c')
             {
-                return (int)temp->charArray[index];
+                return (returnValue){.intValue = (int)temp->charArray[index],
+                                     .floatValue = (float)temp->charArray[index]};
             }
             else if (temp->type == 'b')
             {
-                return temp->boolArray[index];
+                return (returnValue){.intValue = temp->boolArray[index], .floatValue = (float)temp->boolArray[index]};
             }
             else if (temp->type == 'r')
             {
-                return (int)temp->floatArray[index];
+                return (returnValue){.intValue = (int)temp->floatArray[index], .floatValue = temp->floatArray[index]};
             }
         }
     }
 }
 
-int eval_fExpression(treeNode *node)
+returnValue eval_fExpression(treeNode *node)
 {
     if (lengthOfStackLinkedList(node->children) == 1)
     {
         if (strcmp(node->children->node->nonTerminal, "INTLITERAL") == 0)
         {
-            return atoi(node->children->node->terminal);
+            return (returnValue){.intValue = atoi(node->children->node->terminal),
+                                 .floatValue = (float)atoi(node->children->node->terminal)};
         }
         if (strcmp(node->children->node->nonTerminal, "CHAR_LIT") == 0)
         {
-            return (int)(node->children->node->terminal[1]);
+            return (returnValue){.intValue = (int)node->children->node->terminal[1],
+                                 .floatValue = (float)node->children->node->terminal[1]};
         }
         if (strcmp(node->children->node->nonTerminal, "readable") == 0)
         {
@@ -395,7 +398,7 @@ int eval_fExpression(treeNode *node)
     }
 }
 
-int eval_tExpression(treeNode *node)
+returnValue eval_tExpression(treeNode *node)
 {
     if (lengthOfStackLinkedList(node->children) == 1)
     {
@@ -405,20 +408,29 @@ int eval_tExpression(treeNode *node)
     {
         if (strcmp(node->children->next->node->terminal, "*") == 0)
         {
-            return eval_tExpression(node->children->node) * eval_fExpression(node->children->next->next->node);
+            return (returnValue){.intValue = (int)(eval_tExpression(node->children->node).floatValue *
+                                                   eval_fExpression(node->children->next->next->node).floatValue),
+                                 .floatValue = eval_tExpression(node->children->node).floatValue *
+                                               eval_fExpression(node->children->next->next->node).floatValue};
         }
         if (strcmp(node->children->next->node->terminal, "/") == 0)
         {
-            return eval_tExpression(node->children->node) / eval_fExpression(node->children->next->next->node);
+            return (returnValue){.intValue = (int)(eval_tExpression(node->children->node).floatValue /
+                                                   eval_fExpression(node->children->next->next->node).floatValue),
+                                 .floatValue = eval_tExpression(node->children->node).floatValue /
+                                               eval_fExpression(node->children->next->next->node).floatValue};
         }
         if (strcmp(node->children->next->node->terminal, "%") == 0)
         {
-            return eval_tExpression(node->children->node) % eval_fExpression(node->children->next->next->node);
+            return (returnValue){.intValue = (int)(eval_tExpression(node->children->node).intValue %
+                                                   eval_fExpression(node->children->next->next->node).intValue),
+                                 .floatValue = eval_tExpression(node->children->node).intValue %
+                                               eval_fExpression(node->children->next->next->node).intValue};
         }
     }
 }
 
-int eval_arith_expression(treeNode *node)
+returnValue eval_arith_expression(treeNode *node)
 {
     if (lengthOfStackLinkedList(node->children) == 1)
     {
@@ -428,47 +440,54 @@ int eval_arith_expression(treeNode *node)
     {
         if (strcmp(node->children->next->node->terminal, "+") == 0)
         {
-            return eval_arith_expression(node->children->node) + eval_tExpression(node->children->next->next->node);
+            // return eval_arith_expression(node->children->node) + eval_tExpression(node->children->next->next->node);
+            return (returnValue){.intValue = (int)(eval_arith_expression(node->children->node).floatValue +
+                                                   eval_tExpression(node->children->next->next->node).floatValue),
+                                 .floatValue = eval_arith_expression(node->children->node).floatValue +
+                                               eval_tExpression(node->children->next->next->node).floatValue};
         }
         if (strcmp(node->children->next->node->terminal, "-") == 0)
         {
-            return eval_arith_expression(node->children->node) - eval_tExpression(node->children->next->next->node);
+            return (returnValue){.intValue = (int)(eval_arith_expression(node->children->node).floatValue -
+                                                   eval_tExpression(node->children->next->next->node).floatValue),
+                                 .floatValue = eval_arith_expression(node->children->node).floatValue -
+                                               eval_tExpression(node->children->next->next->node).floatValue};
         }
     }
 }
 
-int eval_cond(treeNode *node)
+returnValue eval_cond(treeNode *node)
 {
-    int left = eval_arith_expression(node->children->node);
-    int right = eval_arith_expression(node->children->next->next->node);
+    int left = eval_arith_expression(node->children->node).intValue;
+    int right = eval_arith_expression(node->children->next->next->node).intValue;
 
     if (strcmp(node->children->next->node->terminal, "=") == 0)
     {
-        return left == right;
+        return (returnValue){.intValue = left == right, .floatValue = left == right};
     }
     if (strcmp(node->children->next->node->terminal, "<") == 0)
     {
-        return left < right;
+        return (returnValue){.intValue = left < right, .floatValue = left < right};
     }
     if (strcmp(node->children->next->node->terminal, ">") == 0)
     {
-        return left > right;
+        return (returnValue){.intValue = left > right, .floatValue = left > right};
     }
     if (strcmp(node->children->next->node->terminal, "<=") == 0)
     {
-        return left <= right;
+        return (returnValue){.intValue = left <= right, .floatValue = left <= right};
     }
     if (strcmp(node->children->next->node->terminal, ">=") == 0)
     {
-        return left >= right;
+        return (returnValue){.intValue = left >= right, .floatValue = left >= right};
     }
     if (strcmp(node->children->next->node->terminal, "<>") == 0)
     {
-        return left != right;
+        return (returnValue){.intValue = left != right, .floatValue = left != right};
     }
 }
 
-int eval_factor(treeNode *node)
+returnValue eval_factor(treeNode *node)
 {
     if (lengthOfStackLinkedList(node->children) == 1)
     {
@@ -483,18 +502,20 @@ int eval_factor(treeNode *node)
             {
                 if (temp->type == 'b')
                 {
-                    return temp->boolValue;
+                    return (returnValue){.intValue = temp->boolValue, .floatValue = (float)temp->boolValue};
                 }
                 else
                 {
-                    return temp->intValue != 0;
+                    return (returnValue){.intValue = (temp->intValue != 0), .floatValue = (float)(temp->intValue != 0)};
                 }
             }
         }
     }
     if (strcmp(node->children->node->nonTerminal, "NOT") == 0)
     {
-        return !eval_factor(node->children->next->node);
+        // return !eval_factor(node->children->next->node);
+        return (returnValue){.intValue = !(eval_factor(node->children->next->node).intValue),
+                             .floatValue = !(eval_factor(node->children->next->node).floatValue)};
     }
     else
     {
@@ -502,7 +523,7 @@ int eval_factor(treeNode *node)
     }
 }
 
-int eval_term(treeNode *node)
+returnValue eval_term(treeNode *node)
 {
     if (lengthOfStackLinkedList(node->children) == 1)
     {
@@ -510,11 +531,15 @@ int eval_term(treeNode *node)
     }
     else
     {
-        return eval_term(node->children->node) && eval_factor(node->children->next->next->node);
+        // return eval_term(node->children->node) && eval_factor(node->children->next->next->node);
+        return (returnValue){.intValue = eval_term(node->children->node).intValue &&
+                                         eval_factor(node->children->next->next->node).intValue,
+                             .floatValue = eval_term(node->children->node).floatValue &&
+                                           eval_factor(node->children->next->next->node).floatValue};
     }
 }
 
-int eval_bool_exp(treeNode *node)
+returnValue eval_bool_exp(treeNode *node)
 {
     if (lengthOfStackLinkedList(node->children) == 1)
     {
@@ -522,11 +547,15 @@ int eval_bool_exp(treeNode *node)
     }
     else
     {
-        return eval_bool_exp(node->children->node) || eval_term(node->children->next->next->node);
+        // return eval_bool_exp(node->children->node) || eval_term(node->children->next->next->node);
+        return (returnValue){.intValue = eval_bool_exp(node->children->node).intValue ||
+                                         eval_term(node->children->next->next->node).intValue,
+                             .floatValue = eval_bool_exp(node->children->node).floatValue ||
+                                           eval_term(node->children->next->next->node).floatValue};
     }
 }
 
-int eval_expression(treeNode *node)
+returnValue eval_expression(treeNode *node)
 {
     if (strcmp(node->children->node->nonTerminal, "arith_expression") == 0)
     {
@@ -568,7 +597,7 @@ void read_readable(treeNode *node)
         symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
         if (temp != NULL)
         {
-            int index = eval_arith_expression(node->children->next->next->node->children->node) - 1;
+            int index = eval_arith_expression(node->children->next->next->node->children->node).intValue - 1;
             if (temp->type == 'i')
             {
                 scanf("%d", &temp->intArray[index]);
@@ -603,7 +632,7 @@ void eval_write(treeNode *printableNode)
             }
             else
             {
-                printf("%d ", eval_arith_expression(tempPrintable->children->node));
+                printf("%f ", eval_arith_expression(tempPrintable->children->node).floatValue);
                 break;
             }
         }
@@ -616,7 +645,7 @@ void eval_write(treeNode *printableNode)
             }
             else
             {
-                printf("%d ", eval_arith_expression(tempPrintable->children->node));
+                printf("%f ", eval_arith_expression(tempPrintable->children->node).floatValue);
                 tempPrintable = tempPrintable->children->next->next->node;
             }
         }
@@ -634,19 +663,19 @@ void eval_assignment(treeNode *node)
         {
             if (temp->type == 'i')
             {
-                temp->intValue = eval_expression(expressionNode);
+                temp->intValue = eval_expression(expressionNode).intValue;
             }
             else if (temp->type == 'r')
             {
-                temp->floatValue = eval_expression(expressionNode);
+                temp->floatValue = eval_expression(expressionNode).floatValue;
             }
             else if (temp->type == 'c')
             {
-                temp->charValue = eval_expression(expressionNode);
+                temp->charValue = eval_expression(expressionNode).intValue;
             }
             else if (temp->type == 'b')
             {
-                temp->boolValue = eval_expression(expressionNode);
+                temp->boolValue = eval_expression(expressionNode).intValue;
             }
         }
     }
@@ -655,25 +684,25 @@ void eval_assignment(treeNode *node)
         symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
         treeNode *expressionNode = node->children->next->next->next->next->next->node;
         treeNode *indexNode = node->children->next->next->node;
-        int index = eval_arith_expression(indexNode->children->node) - 1;
+        int index = eval_arith_expression(indexNode->children->node).intValue - 1;
 
         if (temp != NULL)
         {
             if (temp->type == 'i')
             {
-                temp->intArray[index] = eval_expression(expressionNode);
+                temp->intArray[index] = eval_expression(expressionNode).intValue;
             }
             else if (temp->type == 'r')
             {
-                temp->floatArray[index] = eval_expression(expressionNode);
+                temp->floatArray[index] = eval_expression(expressionNode).floatValue;
             }
             else if (temp->type == 'c')
             {
-                temp->charArray[index] = eval_expression(expressionNode);
+                temp->charArray[index] = eval_expression(expressionNode).intValue;
             }
             else if (temp->type == 'b')
             {
-                temp->boolArray[index] = eval_expression(expressionNode);
+                temp->boolArray[index] = eval_expression(expressionNode).intValue;
             }
         }
     }
@@ -685,14 +714,14 @@ void eval_if(treeNode *node)
 {
     if (lengthOfStackLinkedList(node->children) == 7)
     {
-        if (eval_bool_exp(node->children->next->node))
+        if (eval_bool_exp(node->children->next->node).intValue)
         {
             eval_src(node->children->next->next->next->next->node);
         }
     }
     else
     {
-        if (eval_bool_exp(node->children->next->node))
+        if (eval_bool_exp(node->children->next->node).intValue)
         {
             eval_src(node->children->next->next->next->next->node);
         }
@@ -708,8 +737,8 @@ void eval_for(treeNode *node)
     treeNode *aNode1 = node->children->next->next->next->node;
     treeNode *aNode2 = node->children->next->next->next->next->next->node;
     symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->next->node->terminal);
-    int start = eval_arith_expression(aNode1);
-    int end = eval_arith_expression(aNode2);
+    int start = eval_arith_expression(aNode1).intValue;
+    int end = eval_arith_expression(aNode2).intValue;
     int up = strcmp(node->children->next->next->next->next->node->children->node->terminal, "TO") == 0 ? 1 : 0;
     if (up)
     {
@@ -731,7 +760,7 @@ void eval_for(treeNode *node)
 
 void eval_while(treeNode *node)
 {
-    while (eval_bool_exp(node->children->next->node))
+    while (eval_bool_exp(node->children->next->node).intValue)
     {
         eval_src(node->children->next->next->next->next->node);
     }
