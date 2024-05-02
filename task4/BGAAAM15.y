@@ -259,7 +259,9 @@ arith_expression: arith_expression ADDOP tExpression
             sprintf(temp,"t%d",temp_char);
             sprintf(str,"t%d = %s%s%s\n",temp_char++,b,$<string>2,a);
             push(temp);
+            if (in_cond==1) if_count--;
             push_if(str);
+            if (in_cond==1) if_count++;
         }
     }  
     | tExpression
@@ -279,7 +281,9 @@ tExpression: tExpression MULOP fExpression
         {
             char temp[50];
             sprintf(temp,"t%d = %s %s %s\n",temp_char-1,b,$<string>2,a);
+            if (in_cond==1) if_count--;
             push_if(temp);
+            if (in_cond==1) if_count++;
         }
         push(str);
     } 
@@ -312,7 +316,9 @@ fExpression: LPAREN arith_expression RPAREN
             int size = findSize(variable);
             char str_2[50];
             sprintf(str_2,"t%d = %s * %d\nt%d = &%s + t%d\n",temp_char,index,size,temp_char+1,variable,temp_char);
-            push_if(str_2);     
+            if (in_cond==1) if_count--;
+            push_if(str_2);
+            if (in_cond==1) if_count++;
             char str[5];
             sprintf(str,"*t%d",temp_char+1);
             temp_char+=2;
@@ -353,7 +359,9 @@ bool_exp: term
             char str[100];
             sprintf(str,"t%d = 1\nif %s==1 goto L%d\nif %s==1 goto L%d\nt%d = 0\nL%d: ",new_temp,t0,label_count,t1,label_count,new_temp,label_count);
             label_count++;
+            if (in_cond==1) if_count--;
             push_if(str);
+            if (in_cond==1) if_count++;
             char str_2[5];
             sprintf(str_2,"t%d",new_temp);
             push(str_2);
@@ -385,7 +393,9 @@ term: factor
             char str[100];
             sprintf(str,"t%d = 0\nif %s==0 goto L%d\nif %s==0 goto L%d\nt%d = 1\nL%d: ",new_temp,t0,label_count,t1,label_count,new_temp,label_count);
             label_count++;
+            if (in_cond==1) if_count--;
             push_if(str);
+            if (in_cond==1) if_count++;
             char str_2[5];
             sprintf(str_2,"t%d",new_temp);
             push(str_2);
@@ -414,7 +424,9 @@ factor: cond
             char str[100];
             sprintf(str,"t%d = 1\nif %s==1 goto L%d\nt%d = 0\nL%d: ",new_temp,t0,label_count,new_temp,label_count);
             label_count++;
+            if (in_cond==1) if_count--;
             push_if(str);
+            if (in_cond==1) if_count++;
             char str_2[5];
             sprintf(str_2,"t%d",new_temp);
             push(str_2);
@@ -456,7 +468,9 @@ cond: arith_expression RELOP arith_expression
             char * arith_1 = pop();
             char str[100];
             sprintf(str,"t%d = %s %s %s\n",temp_char++,arith_1,$<string>2,arith_2);
+            if (in_cond==1) if_count--;
             push_if(str);
+            if (in_cond==1) if_count++;
             char str_2[5];
             sprintf(str_2,"t%d",temp_char-1);
             push(str_2);
