@@ -431,3 +431,77 @@ int eval_expression(treeNode *node)
     {
     }
 }
+
+int eval_cond(treeNode *node)
+{
+    int left = eval_arith_expression(node->children->node);
+    int right = eval_arith_expression(node->children->next->next->node);
+
+    if (strcmp(node->children->next->node->terminal, "=") == 0)
+    {
+        return left == right;
+    }
+    if (strcmp(node->children->next->node->terminal, "<") == 0)
+    {
+        return left < right;
+    }
+    if (strcmp(node->children->next->node->terminal, ">") == 0)
+    {
+        return left > right;
+    }
+    if (strcmp(node->children->next->node->terminal, "<=") == 0)
+    {
+        return left <= right;
+    }
+    if (strcmp(node->children->next->node->terminal, ">=") == 0)
+    {
+        return left >= right;
+    }
+    if (strcmp(node->children->next->node->terminal, "<>") == 0)
+    {
+        return left != right;
+    }
+}
+
+// TODO: handling floats
+int read_readable(treeNode *node)
+{
+    if (lengthOfStackLinkedList(node->children) == 1)
+    {
+        symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
+        if (temp != NULL)
+        {
+            if (temp->type == 'i')
+            {
+                scanf("%d", &temp->intValue);
+            }
+            else if (temp->type == 'c')
+            {
+                scanf(" %c", &temp->charValue);
+            }
+            else if (temp->type == 'b')
+            {
+                scanf("%d", &temp->boolValue);
+            }
+        }
+    }
+    else
+    {
+        symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
+        if (temp != NULL)
+        {
+            if (temp->type == 'i')
+            {
+                scanf("%d", &temp->intArray[eval_arith_expression(node->children->next->next->node->children->node)]);
+            }
+            else if (temp->type == 'c')
+            {
+                scanf(" %c", &temp->charArray[eval_arith_expression(node->children->next->next->node->children->node)]);
+            }
+            else if (temp->type == 'b')
+            {
+                scanf("%d", &temp->boolArray[eval_arith_expression(node->children->next->next->node->children->node)]);
+            }
+        }
+    }
+}

@@ -26,10 +26,10 @@
         char **newVarNames = realloc(varNames, newCapacity * sizeof(char*));
         char **newVarTypes = realloc(varTypes, newCapacity * sizeof(char*));
         char **newVarValues = realloc(varValues, newCapacity * sizeof(char *));
-        if (!newVarNames) {
-            perror("Out of memory");
-            exit(EXIT_FAILURE);
-        }
+        // if (!newVarNames) {
+        //     perror("Out of memory");
+        //     exit(EXIT_FAILURE);
+        // }
         varNames = newVarNames;
         varTypes = newVarTypes;
         varValues = newVarValues;
@@ -64,10 +64,10 @@
 	    	
 	    ensureCapacity(varCount + 1);
 	    varNames[varCount] = strdup(name); // Duplicate the string to store it
-	    if (!varNames[varCount]) {
-		perror("Out of memory");
-		exit(EXIT_FAILURE);
-	    }
+	    // if (!varNames[varCount]) {
+		// perror("Out of memory");
+		// exit(EXIT_FAILURE);
+	    // }
 	    varCount++;
 	    
 	    return 1;
@@ -81,10 +81,10 @@
 	    varTypes[i] = strdup(name); // Duplicate the string to store it
 	    }
 	    
-	    if (!varNames[typeCount]) {
-		perror("Out of memory");
-		exit(EXIT_FAILURE);
-	    }
+	    // if (!varNames[typeCount]) {
+		// perror("Out of memory");
+		// exit(EXIT_FAILURE);
+	    // }
 	    typeCount = varCount;
 	    
 	    
@@ -151,10 +151,10 @@
 		for (int j = left; j <= right; j++) {
 		    // Allocate memory for the new variable name
 		    char *newVarName = malloc(strlen(baseName) + 16); // 16 for subscript and null terminator
-		    if (newVarName == NULL) {
-		        perror("Out of memory");
-		        exit(EXIT_FAILURE);
-		    }
+		    // if (newVarName == NULL) {
+		    //     perror("Out of memory");
+		    //     exit(EXIT_FAILURE);
+		    // }
 
 		    // Construct the new variable name with subscript
 		    sprintf(newVarName, "%s[%d]", baseName, j);
@@ -420,7 +420,7 @@ tExpression: tExpression MULOP fExpression {
 		$<type>$ = 'r';
 		
 	}else{
-		if(!strcmp($<string>2, "/") && (atoi($<test.val>1) % atoi($<test.val>3) != 0)){
+		if(!strcmp($<string>2, "/")){
 			$<type>$ = 'r';
 		}else{
 			$<type>$ = $<type>3;
@@ -437,7 +437,7 @@ tExpression: tExpression MULOP fExpression {
 			
 			if(strcmp($<test.val>1, "NULL") && strcmp($<test.val>3, "NULL"))
 			{
-				tempvar = atof($<test.val>1) * atof($<test.val>3);
+				tempvar = atof($<test.val>1) / atof($<test.val>3);
 				sprintf(tempchar, "%f", tempvar);
 			}else{
 				f=1;
@@ -477,7 +477,7 @@ tExpression: tExpression MULOP fExpression {
 fExpression: LPAREN arith_expression RPAREN {$<test.val>$ = strdup($<test.val>2); $<test.value>$ = $<test.value>2; $<type>$ = $<type>2;}
     | readable {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = $<type>1;}
     | INTLITERAL {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; $<type>$ = 'i';}
-    | CHAR_LIT {$<type>$ = 'c';}
+    | CHAR_LIT {$<test.val>$ = strdup($<test.val>1); $<type>$ = 'c';}
 
 
 bool_exp: term {$<type>$ = $<type>1;}
@@ -496,21 +496,101 @@ term: factor {$<type>$ = $<type>1;}
            type_to_string($<type>1), type_to_string($<type>3), yylineno);}
 } $<type>$ = $<type>3;} //CHANGE
     
-factor: cond {$<type>$ = $<type>1;}
-    | NOT factor {$<type>$ = $<type>2;}
-    | LPAREN bool_exp RPAREN {$<type>$ = $<type>2;}
-    | IDENTIFIER {int j = checkVar($<test.name>1); $<type>$ = tolower(varTypes[j][0]);}
+factor: cond {$<type>$ = $<type>1; $<test.val>$ = strdup($<test.val>1);}
+    | NOT factor {$<type>$ = $<type>2; 
+	    if(strcmp($<test.val>2, "1") == 0){
+			$<test.val>$ = strdup("0");
+		}
+		else{
+			$<test.val>$ = strdup("1");
+		}
+	}
+    | LPAREN bool_exp RPAREN {$<type>$ = $<type>2; $<test.val>$ = strdup($<test.val>2);}
+    | IDENTIFIER {int j = checkVar($<test.name>1); 
+	if(j!=-1){
+	if(tolower(varTypes[j][0]) == 'b'){
+		$<type>$ = tolower(varTypes[j][0]);
+	    $<test.val>$ = strdup($<test.val>1);
+					}				
+	else{
+		printf("Non-boolean value assigned to boolean expression. ");
+		yyerror(1);
+	}
+			}		}
 
 printable: STRING | printable COMMA readable | printable COMMA STRING | arith_expression
 
 range: TO | DOWNTO
 
-cond: arith_expression RELOP arith_expression {if ($<type>1 != $<type>3) {
-	if(!(strcmp(type_to_string($<type>1), "unknown")==0 || strcmp(type_to_string($<type>3), "unknown")==0)){
+cond: arith_expression RELOP arith_expression {
+	if ($<type>1 != $<type>3) {
+		if(($<type>1 == 'r' && $<type>3 == 'i') || ($<type>3 == 'r' && $<type>1 == 'i')){
+			
+		}
+		else if(!(strcmp(type_to_string($<type>1), "unknown")==0 || strcmp(type_to_string($<type>3), "unknown")==0)){
     printf("Conflicting (%s) and (%s) used in RHS, at line number %d\n", 
            type_to_string($<type>1), type_to_string($<type>3), yylineno);}
+
+	if(strcmp($<test.val>1, "NULL") && strcmp($<test.val>1, "NULL")){
+		if(strcmp($<string>2, "=")){
+			if(strcmp($<test.val>1, $<test.val>3) == 0){
+				$<test.val>$ = strdup("1");
+			}
+			else{
+				$<test.val>$ = strdup("0");
+			}
+		}
+
+	    if(strcmp($<string>2, "<>")){
+			if(strcmp($<test.val>1, $<test.val>3) != 0){
+				$<test.val>$ = strdup("1");
+			}
+			else{
+				$<test.val>$ = strdup("0");
+			}
+		}
+
+	    if(strcmp($<string>2, "<")){
+			if(atof($<test.val>1) < atof($<test.val>3)){
+				$<test.val>$ = strdup("1");
+			}
+			else{
+				$<test.val>$ = strdup("0");
+			}
+		}
+
+	    if(strcmp($<string>2, ">")){
+			if(atof($<test.val>1) > atof($<test.val>3)){
+				$<test.val>$ = strdup("1");
+			}
+			else{
+				$<test.val>$ = strdup("0");
+			}
+		}
+
+	    if(strcmp($<string>2, "<=")){
+			if(atof($<test.val>1) <= atof($<test.val>3)){
+				$<test.val>$ = strdup("1");
+			}
+			else{
+				$<test.val>$ = strdup("0");
+			}
+		}
+
+		if(strcmp($<string>2, ">=")){
+			if(atof($<test.val>1) >= atof($<test.val>3)){
+				$<test.val>$ = strdup("1");
+			}
+			else{
+				$<test.val>$ = strdup("0");
+			}
+		}
+
+
+
+	}
 } 
-$<type>$ = $<type>3;}
+$<type>$ = 'b';}
 
 
 /* srcWithIf: 
