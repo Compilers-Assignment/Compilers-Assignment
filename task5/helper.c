@@ -340,24 +340,33 @@ int eval_readable(treeNode *node)
             {
                 return temp->boolValue;
             }
+            else if (temp->type == 'r')
+            {
+                return (int)temp->floatValue;
+            }
         }
     }
     else
     {
         symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
+        int index = eval_arith_expression(node->children->next->next->node->children->node) - 1;
         if (temp != NULL)
         {
             if (temp->type == 'i')
             {
-                return temp->intArray[eval_arith_expression(node->children->next->next->node->children->node)];
+                return temp->intArray[index];
             }
             else if (temp->type == 'c')
             {
-                return (int)temp->charArray[eval_arith_expression(node->children->next->next->node->children->node)];
+                return (int)temp->charArray[index];
             }
             else if (temp->type == 'b')
             {
-                return temp->boolArray[eval_arith_expression(node->children->next->next->node->children->node)];
+                return temp->boolArray[index];
+            }
+            else if (temp->type == 'r')
+            {
+                return (int)temp->floatArray[index];
             }
         }
     }
@@ -555,17 +564,18 @@ void read_readable(treeNode *node)
         symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
         if (temp != NULL)
         {
+            int index = eval_arith_expression(node->children->next->next->node->children->node) - 1;
             if (temp->type == 'i')
             {
-                scanf("%d", &temp->intArray[eval_arith_expression(node->children->next->next->node->children->node)]);
+                scanf("%d", &temp->intArray[index]);
             }
             else if (temp->type == 'c')
             {
-                scanf("%c", &temp->charArray[eval_arith_expression(node->children->next->next->node->children->node)]);
+                scanf("%c", &temp->charArray[index]);
             }
             else if (temp->type == 'b')
             {
-                scanf("%d", &temp->boolArray[eval_arith_expression(node->children->next->next->node->children->node)]);
+                scanf("%d", &temp->boolArray[index]);
             }
         }
     }
@@ -637,7 +647,7 @@ void eval_assignment(treeNode *node)
         symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->node->terminal);
         treeNode *expressionNode = node->children->next->next->next->next->next->node;
         treeNode *indexNode = node->children->next->next->node;
-        int index = eval_arith_expression(indexNode->children->node);
+        int index = eval_arith_expression(indexNode->children->node) - 1;
 
         if (temp != NULL)
         {
