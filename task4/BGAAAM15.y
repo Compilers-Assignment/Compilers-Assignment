@@ -222,6 +222,7 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
             printf("t%d = %s * %d\n",temp_char++,index,size);
             printf("t%d = &%s + t%d\n",temp_char,variable,temp_char-1);
             printf("*t%d = %s \n",temp_char,expression);
+            temp_char++;
         }
         else
         {
@@ -230,7 +231,8 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
             char * index = pop();
             int size = findSize(variable);
             char str[100];
-            sprintf(str,"t%d = %s * %d\nt%d = &%s + t%d\nt%d = %s\n",temp_char++,index,size,temp_char,variable,temp_char-1,temp_char,expression);
+            sprintf(str,"t%d = %s * %d\nt%d = &%s + t%d\n*t%d = %s\n",temp_char,index,size,temp_char+1,variable,temp_char,temp_char+1,expression);
+            temp_char+=2;
             push_if(str);
         }
     }
@@ -295,7 +297,8 @@ fExpression: LPAREN arith_expression RPAREN
             char * index = pop();
             char * variable = $<string>1;
             int size = findSize(variable);
-            printf("t%d = %s * %d\n",temp_char++,index,size);
+            printf("t%d = %s * %d\n",temp_char,index,size);
+            temp_char++;
             printf("t%d = &%s + t%d\n",temp_char,variable,temp_char-1);
             char str[5];
             sprintf(str,"*t%d",temp_char);
@@ -467,33 +470,6 @@ rule: WRITE LPAREN printable RPAREN SEMICOLON
 
 readable: IDENTIFIER 
     | IDENTIFIER LBRACKET indexing RBRACKET 
-    /* {
-        if (if_count==-1)
-        {
-            char * index = pop();
-            char * variable = $<string>1;
-            int size = findSize(variable);
-            printf("t%d=%s*%d\n",temp_char++,index,size);
-            printf("t%d=&%s+t%d\n",temp_char,variable,temp_char-1);
-            char str[5];
-            sprintf(str,"*t%d",temp_char);
-            temp_char++;
-            push(str);
-        }
-        else
-        {
-            char * index = pop();
-            char * variable = $<string>1;
-            int size = findSize(variable);
-            char str_2[50];
-            sprintf(str_2,"t%d=%s*%d\nt%d=&%s+t%d\n",temp_char++,index,size,temp_char,variable,temp_char-1);
-            push_if(str_2);     
-            char str[5];
-            sprintf(str,"*t%d",temp_char);
-            temp_char++;
-            push(str);
-        }
-    } */
 
 indexing: arith_expression
 
@@ -601,7 +577,7 @@ forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression
             char str[200];
             if (strcmp($<string>5,"to")==0)
             {
-                sprintf(str,"%s=%s\nL%d: if %s>%s goto L%d\n",$<string>2,b,label_count,b,a,label_count+1);
+                sprintf(str,"%s=%s\nL%d: if %s>%s goto L%d\n",$<string>2,b,label_count,$<string>2,a,label_count+1);
                 push_label(label_count);
                 char forVariable[100];
                 sprintf(forVariable,"%s=%s+1\n",$<string>2,$<string>2);
@@ -610,7 +586,7 @@ forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression
             }
             else 
             {
-                sprintf(str,"%s=%s\nL%d: if %s<%s goto L%d\n",$<string>2,b,label_count,b,a,label_count+1);
+                sprintf(str,"%s=%s\nL%d: if %s<%s goto L%d\n",$<string>2,b,label_count,$<string>2,a,label_count+1);
                 push_label(label_count);
                 char forVariable[100];
                 sprintf(forVariable,"%s=%s-1\n",$<string>2,$<string>2);
