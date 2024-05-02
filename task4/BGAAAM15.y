@@ -163,6 +163,18 @@ decl: vars COLON type SEMICOLON
         {
             updateTypes("integer",4,no_of_variables);
         }
+        else if (strcmp(type,"real")==0)
+        {
+            updateTypes("real",8,no_of_variables);
+        }
+        else if (strcmp(type,"char")==0)
+        {
+            updateTypes("char",1,no_of_variables);
+        }
+        else if (strcmp(type,"boolean")==0)
+        {
+            updateTypes("boolean",1,no_of_variables);
+        }
         no_of_variables = 0;
     }
 
@@ -195,7 +207,7 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
         {
             char * a = pop();
             char str[50];
-            sprintf(str,"%s=%s\n",$<string>1,a);
+            sprintf(str,"%s = %s\n",$<string>1,a);
             push_if(str);
         }
     }
@@ -207,9 +219,9 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
             char * expression = pop();
             char * index = pop();
             int size = findSize(variable);
-            printf("t%d=%s*%d\n",temp_char++,index,size);
-            printf("t%d=&%s+t%d\n",temp_char,variable,temp_char-1);
-            printf("*t%d=%s\n",temp_char,expression);
+            printf("t%d = %s * %d\n",temp_char++,index,size);
+            printf("t%d = &%s + t%d\n",temp_char,variable,temp_char-1);
+            printf("*t%d = %s \n",temp_char,expression);
         }
         else
         {
@@ -218,7 +230,7 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON
             char * index = pop();
             int size = findSize(variable);
             char str[100];
-            sprintf(str,"t%d=%s*%d\nt%d=&%s+t%d\nt%d=%s\n",temp_char++,index,size,temp_char,variable,temp_char-1,temp_char,expression);
+            sprintf(str,"t%d = %s * %d\nt%d = &%s + t%d\nt%d = %s\n",temp_char++,index,size,temp_char,variable,temp_char-1,temp_char,expression);
             push_if(str);
         }
     }
@@ -243,7 +255,7 @@ arith_expression: arith_expression ADDOP tExpression
         {
             char temp[5];
             sprintf(temp,"t%d",temp_char);
-            sprintf(str,"t%d=%s%s%s\n",temp_char++,b,$<string>2,a);
+            sprintf(str,"t%d = %s%s%s\n",temp_char++,b,$<string>2,a);
             push(temp);
             push_if(str);
         }
@@ -264,7 +276,7 @@ tExpression: tExpression MULOP fExpression
         else 
         {
             char temp[50];
-            sprintf(temp,"t%d=%s%s%s\n",temp_char-1,b,$<string>2,a);
+            sprintf(temp,"t%d = %s %s %s\n",temp_char-1,b,$<string>2,a);
             push_if(temp);
         }
         push(str);
@@ -283,8 +295,8 @@ fExpression: LPAREN arith_expression RPAREN
             char * index = pop();
             char * variable = $<string>1;
             int size = findSize(variable);
-            printf("t%d=%s*%d\n",temp_char++,index,size);
-            printf("t%d=&%s+t%d\n",temp_char,variable,temp_char-1);
+            printf("t%d = %s * %d\n",temp_char++,index,size);
+            printf("t%d = &%s + t%d\n",temp_char,variable,temp_char-1);
             char str[5];
             sprintf(str,"*t%d",temp_char);
             temp_char++;
@@ -296,7 +308,7 @@ fExpression: LPAREN arith_expression RPAREN
             char * variable = $<string>1;
             int size = findSize(variable);
             char str_2[50];
-            sprintf(str_2,"t%d=%s*%d\nt%d=&%s+t%d\n",temp_char,index,size,temp_char+1,variable,temp_char);
+            sprintf(str_2,"t%d = %s * %d\nt%d = &%s + t%d\n",temp_char,index,size,temp_char+1,variable,temp_char);
             push_if(str_2);     
             char str[5];
             sprintf(str,"*t%d",temp_char+1);
@@ -321,11 +333,11 @@ bool_exp: term
             char * t0 = pop();
             char * t1 = pop();
             int new_temp = temp_char++;
-            printf("t%d=1\n",new_temp);
+            printf("t%d = 1\n",new_temp);
             printf("if %s==1 goto L%d\n",t0,label_count);
             printf("if %s==1 goto L%d\n",t1,label_count);
-            printf("t%d=0\n",new_temp);
-            printf("L%d:",label_count++);
+            printf("t%d = 0\n",new_temp);
+            printf("L%d: ",label_count++);
             char str[5];
             sprintf(str,"t%d",new_temp);
             push(str);
@@ -336,7 +348,7 @@ bool_exp: term
             char * t1 = pop();
             int new_temp = temp_char++;
             char str[100];
-            sprintf(str,"t%d=1\nif %s==1 goto L%d\nif %s==1 goto L%d\nt%d=0\nL%d:",new_temp,t0,label_count,t1,label_count,new_temp,label_count++);
+            sprintf(str,"t%d = 1\nif %s==1 goto L%d\nif %s==1 goto L%d\nt%d = 0\nL%d: ",new_temp,t0,label_count,t1,label_count,new_temp,label_count++);
             push_if(str);
             char str_2[5];
             sprintf(str_2,"t%d",new_temp);
@@ -352,10 +364,10 @@ term: factor
             char * t0 = pop();
             char * t1 = pop();
             int new_temp = temp_char++;
-            printf("t%d=0\n",new_temp);
+            printf("t%d = 0\n",new_temp);
             printf("if %s==0 goto L%d\n",t0,label_count);
             printf("if %s==0 goto L%d\n",t1,label_count);
-            printf("t%d=1\n",new_temp);
+            printf("t%d = 1\n",new_temp);
             printf("L%d:",label_count++);
             char str[5];
             sprintf(str,"t%d",new_temp);
@@ -367,7 +379,7 @@ term: factor
             char * t1 = pop();
             int new_temp = temp_char++;
             char str[100];
-            sprintf(str,"t%d=0\nif %s==0 goto L%d\nif %s==0 goto L%d\nt%d=1\nL%d:",new_temp,t0,label_count,t1,label_count,new_temp,label_count++);
+            sprintf(str,"t%d = 0\nif %s==0 goto L%d\nif %s==0 goto L%d\nt%d = 1\nL%d: ",new_temp,t0,label_count,t1,label_count,new_temp,label_count++);
             push_if(str);
             char str_2[5];
             sprintf(str_2,"t%d",new_temp);
@@ -382,10 +394,10 @@ factor: cond
         {
             char *t0 = pop();
             int new_temp = temp_char++;
-            printf("t%d=1\n",new_temp);
+            printf("t%d = 0\n",new_temp);
             printf("if %s==1 goto L%d\n",t0,label_count);
-            printf("t%d=0\n",new_temp);
-            printf("L%d:",label_count++);
+            printf("t%d = 1\n",new_temp);
+            printf("L%d: ",label_count++);
             char str[5];
             sprintf(str,"t%d",new_temp);
             push(str);
@@ -395,7 +407,7 @@ factor: cond
             char *t0 = pop();
             int new_temp = temp_char++;
             char str[100];
-            sprintf(str,"t%d=1\nif %s==1 goto L%d\nt%d=0\nL%d:",new_temp,t0,label_count,new_temp,label_count++);
+            sprintf(str,"t%d = 1\nif %s==1 goto L%d\nt%d = 0\nL%d: ",new_temp,t0,label_count,new_temp,label_count++);
             push_if(str);
             char str_2[5];
             sprintf(str_2,"t%d",new_temp);
@@ -422,7 +434,7 @@ cond: arith_expression RELOP arith_expression
         {
             char * arith_2 = pop();
             char * arith_1 = pop();
-            printf("t%d=%s%s%s\n",temp_char++,arith_1,$<string>2,arith_2);
+            printf("t%d = %s %s %s\n",temp_char++,arith_1,$<string>2,arith_2);
             char str[5];
             sprintf(str,"t%d",temp_char-1);
             push(str);
@@ -432,7 +444,7 @@ cond: arith_expression RELOP arith_expression
             char * arith_2 = pop();
             char * arith_1 = pop();
             char str[100];
-            sprintf(str,"t%d=%s%s%s\n",temp_char++,arith_1,$<string>2,arith_2);
+            sprintf(str,"t%d = %s %s %s\n",temp_char++,arith_1,$<string>2,arith_2);
             push_if(str);
             char str_2[5];
             sprintf(str_2,"t%d",temp_char-1);
@@ -613,7 +625,7 @@ forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression
             printf("%s",forVariable);
             int label = pop_label();
             printf("goto L%d\n",label);
-            printf("L%d:",label+1);
+            printf("L%d: ",label+1);
         }
         else
         {
