@@ -490,7 +490,7 @@ ifCond: IF conditionals THEN BEG src END SEMICOLON
             printf("if %s==0 goto L%d\n",condition,label_count);
             char * matched = pop_if();
             printf("%s",matched);
-            printf("L%d:\n",label_count++);
+            printf("L%d: ",label_count++);
             if_count--;
         }
         else
@@ -512,7 +512,7 @@ ifCond: IF conditionals THEN BEG src END SEMICOLON
             char * matched = pop_if();
             printf("%s",matched);
             printf("goto L%d\n",label_count+1);
-            printf("L%d:\n",label_count);
+            printf("L%d: ",label_count);
             push_label(label_count+1);
             label_count += 2;
             clear_if();
@@ -629,7 +629,7 @@ whileLoop: WHILE conditionals
         if (if_count == -1)
         {
             char * condition = pop();
-            printf("L%d:",label_count);
+            printf("L%d: ",label_count);
             printf("if %s==0 goto L%d\n",condition,label_count+1);
             push_label(label_count);
             label_count+=2;
@@ -650,7 +650,7 @@ whileLoop: WHILE conditionals
         {
             int label = pop_label();
             printf("goto L%d\n",label);
-            printf("L%d:",label+1);
+            printf("L%d: ",label+1);
         }
         else
         {
