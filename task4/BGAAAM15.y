@@ -348,7 +348,8 @@ bool_exp: term
             char * t1 = pop();
             int new_temp = temp_char++;
             char str[100];
-            sprintf(str,"t%d = 1\nif %s==1 goto L%d\nif %s==1 goto L%d\nt%d = 0\nL%d: ",new_temp,t0,label_count,t1,label_count,new_temp,label_count++);
+            sprintf(str,"t%d = 1\nif %s==1 goto L%d\nif %s==1 goto L%d\nt%d = 0\nL%d: ",new_temp,t0,label_count,t1,label_count,new_temp,label_count);
+            label_count++;
             push_if(str);
             char str_2[5];
             sprintf(str_2,"t%d",new_temp);
@@ -379,7 +380,8 @@ term: factor
             char * t1 = pop();
             int new_temp = temp_char++;
             char str[100];
-            sprintf(str,"t%d = 0\nif %s==0 goto L%d\nif %s==0 goto L%d\nt%d = 1\nL%d: ",new_temp,t0,label_count,t1,label_count,new_temp,label_count++);
+            sprintf(str,"t%d = 0\nif %s==0 goto L%d\nif %s==0 goto L%d\nt%d = 1\nL%d: ",new_temp,t0,label_count,t1,label_count,new_temp,label_count);
+            label_count++;
             push_if(str);
             char str_2[5];
             sprintf(str_2,"t%d",new_temp);
@@ -407,7 +409,8 @@ factor: cond
             char *t0 = pop();
             int new_temp = temp_char++;
             char str[100];
-            sprintf(str,"t%d = 1\nif %s==1 goto L%d\nt%d = 0\nL%d: ",new_temp,t0,label_count,new_temp,label_count++);
+            sprintf(str,"t%d = 1\nif %s==1 goto L%d\nt%d = 0\nL%d: ",new_temp,t0,label_count,new_temp,label_count);
+            label_count++;
             push_if(str);
             char str_2[5];
             sprintf(str_2,"t%d",new_temp);
