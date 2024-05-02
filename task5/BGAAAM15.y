@@ -161,6 +161,11 @@ decl: vars COLON type SEMICOLON  {
                     {
                         temp->boolArray = (int *)malloc(temp->arraySize * sizeof(int));
                     }
+                    temp->initializedArray = (int *)malloc(temp->arraySize * sizeof(int));
+                    for (int i = 0; i < temp->arraySize; i++)
+                    {
+                        temp->initializedArray[i] = 0;
+                    }
                 }
                 break;
             }
