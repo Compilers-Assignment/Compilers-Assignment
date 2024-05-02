@@ -1598,7 +1598,8 @@ int main(int argc, char *argv[]){
     parseStack = createStack();
     yyin=fopen(filename, "r");
     yyparse();
-    printVariableList();
-    /* printTree(parseStack->top->node); */
+    /* printVariableList(); */
+    freopen("syntaxtree.txt", "w", stdout);
+    printTree(parseStack->top->node);
     return 0;
 }
