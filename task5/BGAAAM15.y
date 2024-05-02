@@ -488,26 +488,28 @@ printable: STRING {
 
         push(parseStack, node);
     }
-    | printable COMMA readable {
-        treeNode *readableNode = pop(parseStack);
+    | arith_expression COMMA printable {
         treeNode *printableNode = pop(parseStack);
+        treeNode *readableNode = pop(parseStack);
 
         treeNode *node = createNode("printable", NULL);
 
-        addChild(node, printableNode);
-        addChild(node, createNode("COMMA", ","));
         addChild(node, readableNode);
+        addChild(node, createNode("COMMA", ","));
+        addChild(node, printableNode);
+
+        
 
         push(parseStack, node);
     } 
-    | printable COMMA STRING {
+    | STRING COMMA printable {
         treeNode *printableNode = pop(parseStack);
 
         treeNode *node = createNode("printable", NULL);
         
-        addChild(node, printableNode);
+        addChild(node, createNode("STRING", $<string>1));
         addChild(node, createNode("COMMA", ","));
-        addChild(node, createNode("STRING", $<string>3));
+        addChild(node, printableNode);
 
         push(parseStack, node);
     } 
@@ -567,17 +569,46 @@ src: {
     }
 
 rule: WRITE LPAREN printable RPAREN SEMICOLON {
-    treeNode *printableNode = pop(parseStack);
+        treeNode *printableNode = pop(parseStack);
 
-    treeNode *node = createNode("rule", NULL);
+        treeNode *node = createNode("rule", NULL);
 
-    addChild(node, createNode("WRITE", "WRITE"));
-    addChild(node, createNode("LPAREN", "("));
-    addChild(node, printableNode);
-    addChild(node, createNode("RPAREN", ")"));
-    addChild(node, createNode("SEMICOLON", ";"));
+        addChild(node, createNode("WRITE", "WRITE"));
+        addChild(node, createNode("LPAREN", "("));
+        addChild(node, printableNode);
+        addChild(node, createNode("RPAREN", ")"));
+        addChild(node, createNode("SEMICOLON", ";"));
 
-    push(parseStack, node);
+        push(parseStack, node);
+
+        // print
+        treeNode *tempPrintable = printableNode;
+        while (1){
+            if (lengthOfStackLinkedList(tempPrintable->children) == 1)
+            {
+                if(strcmp(tempPrintable->children->node->nonTerminal, "STRING") == 0){  
+                    printf("%s ", tempPrintable->children->node->terminal);
+                    break;
+                }
+                else{
+                    printf("%d ", eval_arith_expression(tempPrintable->children->node));
+                    break;
+                }
+                
+            }
+            else
+            {   
+                if (strcmp(tempPrintable->children->node->nonTerminal, "STRING") == 0){
+                    printf("%s ", tempPrintable->children->node->terminal);
+                    tempPrintable = tempPrintable->children->next->next->node;
+                }
+                else{
+                    printf("%d ", eval_arith_expression(tempPrintable->children->node));
+                    tempPrintable = tempPrintable->children->next->next->node;
+                }
+            }
+        }
+        printf("\n");
     }
     | READ LPAREN readable RPAREN SEMICOLON {
         treeNode *readableNode = pop(parseStack);
@@ -776,12 +807,11 @@ void printTree(treeNode *root){
 }
 
 void main(){
-    freopen("log.txt", "w", stdout);
+    /* freopen("log.txt", "w", stdout); */
     parseStack = createStack();
     symbolTable = createSymbolTable();
     yyin = fopen("sample.txt", "r");
     yyparse();
-    printf("valid input\n");
     printSymbolTable(symbolTable);
     fclose(yyin);
 }
