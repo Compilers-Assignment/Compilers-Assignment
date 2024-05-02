@@ -622,6 +622,8 @@ rule: WRITE LPAREN printable RPAREN SEMICOLON {
         addChild(node, createNode("SEMICOLON", ";"));
 
         push(parseStack, node);
+
+        read_readable(readableNode);
     }
     | ifCond {
         treeNode *ifCondNode = pop(parseStack);
