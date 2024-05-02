@@ -563,7 +563,7 @@ forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression
             {
                 printf("L%d: ",label_count);
                 printf("if %s<%s goto L%d\n",$<string>2,a,label_count+1);
-                push_label(label_count+1);
+                push_label(label_count);
                 char forVariable[100];
                 sprintf(forVariable,"%s=%s-1\n",$<string>2,$<string>2);
                 push_for(forVariable);
