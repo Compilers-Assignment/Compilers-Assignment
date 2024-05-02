@@ -159,6 +159,11 @@ number [0-9]
     if (strcmp(yytext, ".") == 0) return PERIOD;
 }
 
+{number}+"."{number}+ {
+    yylval.string = strdup(yytext);
+    return INTLITERAL;
+}
+
 " "* {;}
 
 [ \r] {;}

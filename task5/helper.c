@@ -380,7 +380,7 @@ returnValue eval_fExpression(treeNode *node)
         if (strcmp(node->children->node->nonTerminal, "INTLITERAL") == 0)
         {
             return (returnValue){.intValue = atoi(node->children->node->terminal),
-                                 .floatValue = (float)atoi(node->children->node->terminal)};
+                                 .floatValue = atof(node->children->node->terminal)};
         }
         if (strcmp(node->children->node->nonTerminal, "CHAR_LIT") == 0)
         {
@@ -632,7 +632,7 @@ void eval_write(treeNode *printableNode)
             }
             else
             {
-                printf("%d ", eval_arith_expression(tempPrintable->children->node).intValue);
+                printf("%f ", eval_arith_expression(tempPrintable->children->node).floatValue);
                 break;
             }
         }
@@ -645,7 +645,7 @@ void eval_write(treeNode *printableNode)
             }
             else
             {
-                printf("%d ", eval_arith_expression(tempPrintable->children->node).intValue);
+                printf("%f ", eval_arith_expression(tempPrintable->children->node).floatValue);
                 tempPrintable = tempPrintable->children->next->next->node;
             }
         }
