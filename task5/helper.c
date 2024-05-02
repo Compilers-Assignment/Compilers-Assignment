@@ -142,6 +142,7 @@ struct symbolTableNode
     float *floatArray;
     char *charArray;
     int *boolArray;
+    int initialized;
     symbolTableNode *next;
 };
 
@@ -164,6 +165,7 @@ symbolTableNode *createSymbolTableNode(char *name, char type)
     node->charArray = NULL;
     node->boolArray = NULL;
     node->next = NULL;
+    node->initialized = 0;
     return node;
 }
 
@@ -211,49 +213,50 @@ void printSymbolTable(symbolTableNode *table)
     else
     {
         printf("Symbol table:\n");
-        printf("Name\tType\tValue\n");
+        printf("Name\t\t|Type\t\t|Value\n");
+        printf("---------------------------------\n");
         temp = temp->next;
     }
     while (temp != NULL)
     {
-        printf("%s\t", temp->name);
+        printf("%s\t\t|", temp->name);
         if (temp->isArray)
         {
             printf("array of ");
             if (temp->type == 'i')
             {
-                printf("int\t");
+                printf("int\t\t|");
             }
             else if (temp->type == 'r')
             {
-                printf("real\t");
+                printf("real\t\t|");
             }
             else if (temp->type == 'c')
             {
-                printf("char\t");
+                printf("char\t\t|");
             }
             else if (temp->type == 'b')
             {
-                printf("bool\t");
+                printf("bool\t\t|");
             }
         }
         else
         {
             if (temp->type == 'i')
             {
-                printf("int\t\t");
+                printf("int\t\t|");
             }
             else if (temp->type == 'r')
             {
-                printf("real\t\t");
+                printf("real\t\t|");
             }
             else if (temp->type == 'c')
             {
-                printf("char\t\t");
+                printf("char\t\t|");
             }
             else if (temp->type == 'b')
             {
-                printf("bool\t\t");
+                printf("bool\t\t|");
             }
         }
         if (temp->isArray)
@@ -293,21 +296,28 @@ void printSymbolTable(symbolTableNode *table)
         }
         else
         {
-            if (temp->type == 'i')
+            if (temp->initialized)
             {
-                printf("%d\n", temp->intValue);
+                if (temp->type == 'i')
+                {
+                    printf("%d\n", temp->intValue);
+                }
+                else if (temp->type == 'r')
+                {
+                    printf("%f\n", temp->floatValue);
+                }
+                else if (temp->type == 'c')
+                {
+                    printf("%c\n", temp->charValue);
+                }
+                else if (temp->type == 'b')
+                {
+                    printf("%d\n", temp->boolValue);
+                }
             }
-            else if (temp->type == 'r')
+            else
             {
-                printf("%f\n", temp->floatValue);
-            }
-            else if (temp->type == 'c')
-            {
-                printf("%c\n", temp->charValue);
-            }
-            else if (temp->type == 'b')
-            {
-                printf("%d\n", temp->boolValue);
+                printf("(uninitialized)\n");
             }
         }
         temp = temp->next;
@@ -463,8 +473,8 @@ returnValue eval_arith_expression(treeNode *node)
 
 returnValue eval_cond(treeNode *node)
 {
-    int left = eval_arith_expression(node->children->node).intValue;
-    int right = eval_arith_expression(node->children->next->next->node).intValue;
+    int left = eval_arith_expression(node->children->node).floatValue;
+    int right = eval_arith_expression(node->children->next->next->node).floatValue;
 
     if (strcmp(node->children->next->node->terminal, "=") == 0)
     {
@@ -683,6 +693,7 @@ void eval_assignment(treeNode *node)
             {
                 temp->boolValue = eval_expression(expressionNode).intValue;
             }
+            temp->initialized = 1;
         }
     }
     else
@@ -743,6 +754,7 @@ void eval_for(treeNode *node)
     treeNode *aNode1 = node->children->next->next->next->node;
     treeNode *aNode2 = node->children->next->next->next->next->next->node;
     symbolTableNode *temp = searchSymbolTable(symbolTable, node->children->next->node->terminal);
+    temp->initialized = 1;
     int start = eval_arith_expression(aNode1).intValue;
     int end = eval_arith_expression(aNode2).intValue;
     int up = strcmp(node->children->next->next->next->next->node->children->node->terminal, "TO") == 0 ? 1 : 0;
