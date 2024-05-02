@@ -1174,6 +1174,61 @@ factor: cond {
 		}	
     }
 
+newreadable: IDENTIFIER {
+        treeNode *node = createNode("newreadable", NULL);
+
+        addChild(node, createNode("IDENTIFIER", $<string>1));
+
+        push(parseStack, node);
+
+         int j = checkVar($<test.name>1); 
+        if(j != -1){
+            varValues[j] = "";
+        }else{
+           
+        }
+
+
+        
+    }
+
+    | IDENTIFIER LBRACKET indexing RBRACKET {
+        treeNode *indexingNode = pop(parseStack);
+
+        treeNode *node = createNode("newreadable", NULL);
+
+        addChild(node, createNode("IDENTIFIER", $<string>1));
+        addChild(node, createNode("LBRACKET", "["));
+        addChild(node, indexingNode);
+        addChild(node, createNode("RBRACKET", "]"));
+
+        push(parseStack, node);
+
+        char *str = strcat($<test.name>1, "[");
+	    char *str2 = strdup($<test.val>3);
+		if(strcmp(str2,"NULL")){
+            char *str3 = strcat(str2, "]");
+            char *newStr = strcat(str, str3);
+            int j = checkVar(newStr);
+
+            if(j!=-1){
+                // $<test.val>$ = varValues[j];
+                // if(strcmp($<test.val>$, safe) == 0) 
+                // {
+                //     printf("Variable %s used before it is assigned a value. ", $<test.name>1);
+                //     yyerror(1);
+                // }
+                // $<test.val>$ = strdup(varValues[j]);
+                // $<type>$ = tolower(varTypes[j][0]);
+                varValues[j] = "";
+            }else{
+                $<test.val>$ = "NULL";
+            }
+		}
+
+        
+    }
+
 printable: STRING {
         treeNode *node = createNode("printable", NULL);
 
@@ -1338,7 +1393,7 @@ rule: WRITE LPAREN printable RPAREN SEMICOLON {
 
     push(parseStack, node);
     }
-    | READ LPAREN readable RPAREN SEMICOLON {
+    | READ LPAREN newreadable RPAREN SEMICOLON {
         treeNode *readableNode = pop(parseStack);
 
         treeNode *node = createNode("rule", NULL);
@@ -1490,10 +1545,11 @@ forLoop: FOR IDENTIFIER ASGOP arith_expression range arith_expression{
             // }
             if($<type>4 != 'i' || $<type>6 != 'i')
                 printf("Loop range values must be integer type. Line number %d.\n", yylineno);
+            else
+                varValues[j] = strdup($<test.val>4);
                 
         }else{
                         // printf("sadfdsfdsf%c, ", $<type>2);
-
             printf("Loop variable must be integer type. Line number %d.\n", yylineno);
             
         }
