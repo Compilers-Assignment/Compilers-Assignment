@@ -285,7 +285,22 @@ assignment: IDENTIFIER ASGOP expression SEMICOLON {
     addChild(node, createNode("SEMICOLON", ";"));
 
     push(parseStack, node);
-}
+    } | IDENTIFIER LBRACKET indexing RBRACKET ASGOP expression SEMICOLON {
+        treeNode *expressionNode = pop(parseStack);
+        treeNode *indexingNode = pop(parseStack);
+
+        treeNode *node = createNode("assignment", NULL);
+
+        addChild(node, createNode("IDENTIFIER", $<string>1));
+        addChild(node, createNode("LBRACKET", "["));
+        addChild(node, indexingNode);
+        addChild(node, createNode("RBRACKET", "]"));
+        addChild(node, createNode("ASGOP", ":="));
+        addChild(node, expressionNode);
+        addChild(node, createNode("SEMICOLON", ";"));
+
+        push(parseStack, node);
+    }
 
 expression: arith_expression {
         treeNode *arithExpressionNode = pop(parseStack);
