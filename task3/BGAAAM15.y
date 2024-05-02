@@ -10,6 +10,7 @@
     char **varValues = NULL;
     int varCount = 0; // Number of variables currently stored
     int typeCount = 0;
+	char safe[] = "NULL";
     int varCapacity = 0; // Current capacity of the array
     extern int yylineno;
     int yylex();
@@ -32,7 +33,6 @@
         varNames = newVarNames;
         varTypes = newVarTypes;
         varValues = newVarValues;
-        char safe[] = "NULL";
         for (int i = varCapacity; i < newCapacity; ++i) {
             varNames[i] = NULL; // Initialize new elements to NULL
             varTypes[i] = NULL;
@@ -504,7 +504,7 @@ rule: WRITE LPAREN printable RPAREN SEMICOLON
     | assignment
     | BEG srcWithIf END */
 
-readable: IDENTIFIER { int j = checkVar($<test.name>1); $<test.val>$ = strdup(varValues[j]); $<test.value>$ = atoi(varValues[j]); $<type>$ = tolower(varTypes[j][0]);} 
+readable: IDENTIFIER { int j = checkVar($<test.name>1); $<test.val>$ = strdup(varValues[j]); if(strcmp($<test.val>$, safe) == 0) {printf("Variable %s used before it is assigned a value. ", $<test.name>1); yyerror(1);} $<test.value>$ = atoi(varValues[j]); $<type>$ = tolower(varTypes[j][0]);} 
     | IDENTIFIER LBRACKET indexing RBRACKET 
     {
     	      char *str = strcat($<test.name>1, "[");
@@ -514,15 +514,20 @@ readable: IDENTIFIER { int j = checkVar($<test.name>1); $<test.val>$ = strdup(va
 	      char *newStr = strcat(str, str3);
 		//   printf("%s--", newStr);
 	      int j = checkVar(newStr);
+
+		  
 	      
 	      
 	      if(j!=-1){
-			$<test.val>$ = varValues[j];
+		  $<test.val>$ = varValues[j];
+		  if(strcmp($<test.val>$, safe) == 0) 
+		  {printf("Variable %s used before it is assigned a value. ", $<test.name>1);
+		   yyerror(1);}
 	      $<test.value>$ = atoi(varValues[j]);
 	      $<type>$ = tolower(varTypes[j][0]);
-	      printf("type of - %c",$<type>$); 
+	      //printf("type of - %c",$<type>$); 
 		  }
-    }//this is array bs we take lite for now
+    }
 
 indexing: arith_expression {$<test.val>$ = strdup($<test.val>1); $<test.value>$ = $<test.value>1; if($<type>1 != 'i')
 {printf("Array index not integer."); yyerror(1);} else{$<type>$ = $<type>1;}}
