@@ -232,7 +232,7 @@ arith_expression: arith_expression ADDOP tExpression
         char str[20];
         char * a = pop();
         char * b = pop();
-        if (if_count == -1)
+        if (if_count == -1 || (if_count==0 && in_cond==1))
         {
             sprintf(str,"t%d",temp_char++);
             addQuadruple(b,$<string>2, a ,str);
@@ -256,7 +256,7 @@ tExpression: tExpression MULOP fExpression
         sprintf(str,"t%d",temp_char++);
         char * a = pop();
         char * b = pop();
-        if (if_count == -1)
+        if (if_count == -1 || (if_count==0 && in_cond==1))
         {
             addQuadruple(b,$<string>2,a,str);
             display_Quad();
@@ -411,7 +411,7 @@ factor: cond
 printable: STRING 
     | printable COMMA readable 
     | printable COMMA STRING 
-    | arith_expression
+    | arith_expression {pop();}
 
 range: TO 
     | DOWNTO
