@@ -1,9 +1,7 @@
 # Assignment-3
 
-Things not implemented yet:
+Final assignment of course CS F363 Compiler Construction
 
-- Verify integrity of value checking- Check for defined but undeclared variables
-- Avoid segfault during return from checkVar
-- Negative numbers in arithmetic
-- Arithop subtraction
+- Implementation of a simplified Pascal Compiler, made using Flex and Bison.
+
 
